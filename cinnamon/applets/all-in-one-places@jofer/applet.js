@@ -3,7 +3,7 @@
  * Version: 1.0
  * 
  * @developer jferrao <jferrao@ymail.com>
- * @url https://github.com/jferrao/all-in-one-places
+ * @url https://github.com/jferrao/gtk/cinnamon/applets 
  * 
  */
 
