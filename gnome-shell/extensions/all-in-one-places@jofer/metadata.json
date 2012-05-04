@@ -1,0 +1,10 @@
+{
+    "uuid": "all-in-one-places@jofer",
+    "name": "All-in-one Places",
+    "description": "All-in-one quick navigation to places, bookmarks, devices and document history.",
+    "url": "https://github.com/jferrao/gtk/gnome-shell/applets",
+    "shell-version": [
+        "3.2"
+    ],
+    "version": "1.0"
+}
