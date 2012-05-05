@@ -1,6 +1,6 @@
 /**
  * All-in-one Places applet for Cinnamon
- * Version: 1.0
+ * Version: 1.1
  * 
  * @developer jferrao <jferrao@ymail.com>
  * @url https://github.com/jferrao/gtk/cinnamon/applets 
@@ -15,6 +15,7 @@
  * You can edit this true/false values to costumize the look & feel of the applet.
  * Restart Cinnamon (Alt+F2 + r + Enter) may be needed for changes to take effect.
  */
+ 
 SHOW_PANEL_ICON       = true;
 USE_FULL_COLOR_ICON   = false;
 SHOW_PANEL_TEXT       = false;
@@ -28,6 +29,11 @@ SHOW_NETWORK          = true;
 COLLAPSE_NETWORK      = false;
 SHOW_SEARCH           = true;
 SHOW_RECENT_DOCUMENTS = true;
+
+const ICON_SIZE       = 22;
+
+const RECENT_ITEMS    = 10;
+
 /**
  * Ok, that's enough editing. ------------------------------------------
  */
@@ -39,12 +45,13 @@ SHOW_RECENT_DOCUMENTS = true;
 /**
  * Import stuff ...
  */
+const Applet = imports.ui.applet;
+
 const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 const St = imports.gi.St;
 const ModalDialog = imports.ui.modalDialog;
 const Clutter = imports.gi.Clutter;
-const Applet = imports.ui.applet;
 const Main = imports.ui.main;
 const PopupMenu = imports.ui.popupMenu;
 const Gettext = imports.gettext;
@@ -52,10 +59,6 @@ const _ = Gettext.gettext;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const FileUtils = imports.misc.fileUtils;
-
-const RECENT_ITEMS          = 10;
-
-const ICON_SIZE             = 22;
 
 /**
  * Messages for the confirmation dialog boxes.
@@ -66,6 +69,7 @@ const EJECT_DEVICE_LABEL    = _("Eject");
 const EJECT_DEVICE_MESSAGE  = _("Are you sure you want to eject this device ?") + "\n";
 const CLEAR_RECENT_LABEL    = _("Recent documents");
 const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
+
 
 
 
@@ -88,10 +92,9 @@ MenuItem.prototype =
             
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
 
-        this.icon = icon;
-        this.box.add(this.icon);
-        this.label = new St.Label({ text: text });
-        this.box.add(this.label);
+        this.box.add(icon);
+        let label = new St.Label({ text: text });
+        this.box.add(label);
         this.addActor(this.box);
     }
 };
@@ -116,16 +119,15 @@ DeviceMenuItem.prototype =
         
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
 
-        this.icon = icon;
-        this.box.add(this.icon);
-        this.label = new St.Label({ text: text });
-        this.box.add(this.label);
+        this.box.add(icon);
+        let label = new St.Label({ text: text });
+        this.box.add(label);
         this.addActor(this.box);
         
         let ejectIcon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        let ejectButton = new St.Button({ child: ejectIcon, tooltip_text: _("Eject") });
-        ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
-        this.addActor(ejectButton);
+        this.ejectButton = new St.Button({ child: ejectIcon, tooltip_text: _("Eject") });
+        this.ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
+        this.addActor(this.ejectButton);
     },
     
     _ejectDevice: function()
@@ -161,20 +163,22 @@ TrashMenuItem.prototype =
     {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
 
-        this.trash_path = 'trash:///';
-        this.trash_file = Gio.file_new_for_uri(this.trash_path);
+        let trash_path = 'trash:///';
+        this.trash_file = Gio.file_new_for_uri(trash_path);
 
         this.text = text;
 
         this._checkTrashStatus();
-        this._addTrashWatch();
+
+        this.monitor = this.trash_file.monitor_directory(0, null, null);
+        this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
     
     
-    _trashItemBase: function(icon)
+    _trashItemBase: function()
     {
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });        
-        this.box.add(icon);
+        this.box.add(this.icon);
         this.label = new St.Label({ text: this.text });
         this.box.add(this.label);
         this.addActor(this.box);
@@ -183,13 +187,13 @@ TrashMenuItem.prototype =
     _trashItemEmpty: function()
     {
         this.icon = new St.Icon({icon_name: "trashcan_empty", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(this.icon);
+        this._trashItemBase();
     },
     
     _trashItemFull: function()
     {
         this.icon = new St.Icon({icon_name: "trashcan_full", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(this.icon);
+        this._trashItemBase();
         
         let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
         this.emptyButton = new St.Button({ child: emptyIcon, tooltip_text: _("Empty Trash")  });
@@ -220,12 +224,6 @@ TrashMenuItem.prototype =
                 this.actor.visible = true;
             }
         }
-    },
-    
-    _addTrashWatch: function()
-    {
-        this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
     
     _emptyTrash: function()
@@ -327,7 +325,7 @@ MyApplet.prototype =
             
             if (SHOW_PANEL_ICON) {
                 if (USE_FULL_COLOR_ICON) {
-                    this.set_applet_icon_name("user-home");
+                    this.set_applet_icon_name('user-home');
                 } else {
                     this.set_applet_icon_symbolic_name('folder');
                 }
@@ -358,7 +356,7 @@ MyApplet.prototype =
     _display : function()
     {
         
-        // Show default places section - not used on this version.
+        // Show default places section - not to be used on this version.
         //this._createDefaultPlaces();
         
         // Show home section
@@ -385,6 +383,7 @@ MyApplet.prototype =
                 this.menu.addMenuItem(this._bookmarksSection);
             }
             
+            // Monitor bokkmarks changes - still working on this one ...
             //this._addBookmarksWatch();
             Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
         }   
@@ -405,6 +404,7 @@ MyApplet.prototype =
                 this.menu.addMenuItem(this._devicesSection);
             }
             
+            // Monitor mounts changes
             Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
         }
 
@@ -438,6 +438,7 @@ MyApplet.prototype =
                 this.menu.addMenuItem(this._recentSection);
                 this._createRecent();
             
+                // Monitor recent documents changes
                 this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
             }
         }
@@ -449,7 +450,7 @@ MyApplet.prototype =
      */
     _createComputer: function()
     {
-        let icon = new St.Icon({icon_name: "computer", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'computer', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.computerItem = new MenuItem(icon, _("Computer"));
         this.computerItem.connect('activate', function(actor, event) {
             new launch().command("nautilus computer://");
@@ -462,7 +463,7 @@ MyApplet.prototype =
      */
     _createHome: function()
     {
-        let icon = new St.Icon({icon_name: "user-home", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'user-home', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.homeItem = new MenuItem(icon, _("Home Folder"));
         this.homeItem.connect('activate', function(actor, event) {
             new launch().command("nautilus");
@@ -475,7 +476,7 @@ MyApplet.prototype =
      */
     _createDesktop: function()
     {
-        let icon = new St.Icon({icon_name: "user-desktop", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'user-desktop', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.desktopItem = new MenuItem(icon, _("Desktop"));
         this.desktopItem.connect('activate', function(actor, event) {
             new launch().command("nautilus \"" + FileUtils.getUserDesktopDir().replace(" ","\ ") + "\"");
@@ -532,7 +533,7 @@ MyApplet.prototype =
     },
     
     /**
-     * Method for testing purposes - do not use !!! 
+     * Method still under development - do not use ...
      */
     _addBookmarksWatch: function()
     {
@@ -594,14 +595,14 @@ MyApplet.prototype =
     {
         sectionMenu = (this._networkSection.menu) ? this._networkSection.menu : this._networkSection;
         
-        let icon = new St.Icon({icon_name: "network-workgroup", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'network-workgroup', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.networkItem = new MenuItem(icon, _("Network"));
         this.networkItem.connect('activate', function(actor, event) {
             new launch().command("nautilus network:///");
         });
         sectionMenu.addMenuItem(this.networkItem);
         
-        let icon = new St.Icon({icon_name: "gnome-globe", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'gnome-globe', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.connectItem = new MenuItem(icon, _("Connect to..."));
         this.connectItem.connect('activate', function(actor, event) {
             new launch().command("nautilus-connect-server");
@@ -615,7 +616,7 @@ MyApplet.prototype =
      */
     _createSearch: function()
     {
-        let icon = new St.Icon({icon_name: "search", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'search', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.searchItem = new MenuItem(icon, _("Search"));
         this.menu.addMenuItem(this.searchItem);
 
@@ -646,11 +647,10 @@ MyApplet.prototype =
             menuItem = new PopupMenu.PopupBaseMenuItem();
             let label = new St.Label({ text: _("Clear list") });
             menuItem.addActor(label, { align: St.Align.END });
-            let icon = new St.Icon({ icon_name: "edit-clear", icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
+            let icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
             menuItem.addActor(icon, { align: St.Align.MIDDLE });
-            this._recentSection.menu.addMenuItem(menuItem);
-            
             menuItem.connect('activate', Lang.bind(this, this._clearRecent));
+            this._recentSection.menu.addMenuItem(menuItem);
         }
 
         if (this.RecentManager.size == 0) {
