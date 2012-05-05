@@ -15,17 +15,19 @@
  * You can edit this true/false values to costumize the look & feel of the applet.
  * Restart Cinnamon (Alt+F2 + r + Enter) may be needed for changes to take effect.
  */
-const USE_FULL_COLOR_ICON   = false;
-const SHOW_DESKTOP          = true;
-const AUTO_HIDE_TRASH       = false;
-const SHOW_BOOKMARKS        = true;
-const COLLAPSE_BOOKMARKS    = false;
-const SHOW_DEVICES          = true;
-const COLLAPSE_DEVICES      = false;
-const SHOW_NETWORK          = true;
-const COLLAPSE_NETWORK      = false;
-const SHOW_SEARCH           = true;
-const SHOW_RECENT_DOCUMENTS = true;
+SHOW_PANEL_ICON       = true;
+USE_FULL_COLOR_ICON   = false;
+SHOW_PANEL_TEXT       = false;
+SHOW_DESKTOP          = true;
+AUTO_HIDE_TRASH       = false;
+SHOW_BOOKMARKS        = true;
+COLLAPSE_BOOKMARKS    = false;
+SHOW_DEVICES          = true;
+COLLAPSE_DEVICES      = false;
+SHOW_NETWORK          = true;
+COLLAPSE_NETWORK      = false;
+SHOW_SEARCH           = true;
+SHOW_RECENT_DOCUMENTS = true;
 /**
  * Ok, that's enough editing. ------------------------------------------
  */
@@ -312,19 +314,30 @@ function MyApplet(orientation)
 
 MyApplet.prototype =
 {
-    __proto__: Applet.IconApplet.prototype,
+    __proto__: Applet.TextIconApplet.prototype,
 
     _init: function(orientation)
     {
-        Applet.IconApplet.prototype._init.call(this, orientation);
+        Applet.TextIconApplet.prototype._init.call(this, orientation);
 
         try {
-            if (USE_FULL_COLOR_ICON) {
-                this.set_applet_icon_name("user-home");
-            } else {
-                this.set_applet_icon_symbolic_name('folder');
+            if (!SHOW_PANEL_ICON && !SHOW_PANEL_TEXT) {
+                SHOW_PANEL_ICON = true;
             }
-            this.set_applet_tooltip(_("Places"));
+            
+            if (SHOW_PANEL_ICON) {
+                if (USE_FULL_COLOR_ICON) {
+                    this.set_applet_icon_name("user-home");
+                } else {
+                    this.set_applet_icon_symbolic_name('folder');
+                }
+            }
+            
+            if (SHOW_PANEL_TEXT) {
+                this.set_applet_label(" " + _("Places"));
+            } else {
+                this.set_applet_tooltip(_("Places"));
+            }
 
             this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menu = new Applet.AppletPopupMenu(this, orientation);
