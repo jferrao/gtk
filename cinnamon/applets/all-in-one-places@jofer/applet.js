@@ -24,6 +24,7 @@ const SHOW_DEVICES          = true;
 const COLLAPSE_DEVICES      = false;
 const SHOW_NETWORK          = true;
 const COLLAPSE_NETWORK      = false;
+const SHOW_SEARCH           = true;
 const SHOW_RECENT_DOCUMENTS = true;
 /**
  * Ok, that's enough editing. ------------------------------------------
@@ -179,14 +180,14 @@ TrashMenuItem.prototype =
     
     _trashItemEmpty: function()
     {
-        let icon = new St.Icon({icon_name: "trashcan_empty", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(icon);
+        this.icon = new St.Icon({icon_name: "trashcan_empty", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this._trashItemBase(this.icon);
     },
     
     _trashItemFull: function()
     {
-        let icon = new St.Icon({icon_name: "trashcan_full", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(icon);
+        this.icon = new St.Icon({icon_name: "trashcan_full", icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this._trashItemBase(this.icon);
         
         let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
         this.emptyButton = new St.Button({ child: emptyIcon, tooltip_text: _("Empty Trash")  });
@@ -408,20 +409,24 @@ MyApplet.prototype =
             }
         }
 
-        // Show search section
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._createSearch();
+        if (SHOW_SEARCH || SHOW_RECENT_DOCUMENTS) {
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // Show recent documents section
-        if (SHOW_RECENT_DOCUMENTS) {
-            this.RecentManager = new Gtk.RecentManager();
+            // Show search section
+            if (SHOW_SEARCH) {
+                this._createSearch();
+            }
 
-            //this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
-            this.menu.addMenuItem(this._recentSection);
-            this._createRecent();
+            // Show recent documents section
+            if (SHOW_RECENT_DOCUMENTS) {
+                this.RecentManager = new Gtk.RecentManager();
+
+                this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
+                this.menu.addMenuItem(this._recentSection);
+                this._createRecent();
             
-            this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+                this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+            }
         }
         
     },

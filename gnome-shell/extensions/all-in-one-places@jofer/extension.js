@@ -3,7 +3,7 @@
  * Version: 1.0
  * 
  * @developer jferrao <jferrao@ymail.com>
- * @url https://github.com/jferrao/gtk/cinnamon/applets 
+ * @url https://github.com/jferrao/gtk/gnome-shell/extensions 
  * 
  */
 
@@ -23,6 +23,7 @@ const SHOW_DEVICES          = true;
 const COLLAPSE_DEVICES      = false;
 const SHOW_NETWORK          = true;
 const COLLAPSE_NETWORK      = false;
+const SHOW_SEARCH           = true;
 const SHOW_RECENT_DOCUMENTS = true;
 /**
  * Ok, that's enough editing. ------------------------------------------
@@ -386,20 +387,24 @@ MyExtension.prototype =
             }
         }
 
-        // Show search section
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._createSearch();
+        if (SHOW_SEARCH || SHOW_RECENT_DOCUMENTS) {
+            this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // Show recent documents section
-        if (SHOW_RECENT_DOCUMENTS) {
-            this.RecentManager = new Gtk.RecentManager();
+            // Show search section
+            if (SHOW_SEARCH) {
+                this._createSearch();
+            }
 
-            //this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
-            this.menu.addMenuItem(this._recentSection);
-            this._createRecent();
+            // Show recent documents section
+            if (SHOW_RECENT_DOCUMENTS) {
+                this.RecentManager = new Gtk.RecentManager();
+
+                this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
+                this.menu.addMenuItem(this._recentSection);
+                this._createRecent();
             
-            this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+                this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+            }
         }
         
     },
