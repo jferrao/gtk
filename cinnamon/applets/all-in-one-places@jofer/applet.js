@@ -12,27 +12,27 @@
 
 
 /**
- * You can edit this true/false values to costumize the look & feel of the applet.
+ * You can edit this true or false values to customize the look & feel of the applet.
  * Restart Cinnamon (Alt+F2 + r + Enter) may be needed for changes to take effect.
  */
  
-SHOW_PANEL_ICON       = true;
-USE_FULL_COLOR_ICON   = false;
-SHOW_PANEL_TEXT       = false;
-SHOW_DESKTOP          = true;
-AUTO_HIDE_TRASH       = false;
-SHOW_BOOKMARKS        = true;
-COLLAPSE_BOOKMARKS    = false;
-SHOW_DEVICES          = true;
-COLLAPSE_DEVICES      = false;
-SHOW_NETWORK          = true;
-COLLAPSE_NETWORK      = false;
-SHOW_SEARCH           = true;
-SHOW_RECENT_DOCUMENTS = true;
+SHOW_PANEL_ICON         = true;
+USE_FULL_COLOR_ICON     = false;
+SHOW_PANEL_TEXT         = false;
+SHOW_DESKTOP            = true;
+AUTO_HIDE_TRASH         = false;
+SHOW_BOOKMARKS          = true;
+COLLAPSE_BOOKMARKS      = false;
+SHOW_DEVICES            = true;
+COLLAPSE_DEVICES        = false;
+SHOW_NETWORK            = true;
+COLLAPSE_NETWORK        = false;
+SHOW_SEARCH             = true;
+SHOW_RECENT_DOCUMENTS   = true;
 
-const ICON_SIZE       = 22;
+ICON_SIZE               = 22;
 
-const RECENT_ITEMS    = 10;
+RECENT_ITEMS            = 10;
 
 /**
  * Ok, that's enough editing. ------------------------------------------
