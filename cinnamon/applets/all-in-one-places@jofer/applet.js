@@ -3,7 +3,7 @@
  * Version: 1.1
  * 
  * @developer jferrao <jferrao@ymail.com>
- * @url https://github.com/jferrao/gtk/cinnamon/applets 
+ * @url https://github.com/jferrao/gtk
  * 
  */
 
@@ -163,7 +163,7 @@ TrashMenuItem.prototype =
     {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
 
-        let trash_path = 'trash:///';
+        let trash_path = "trash:///";
         this.trash_file = Gio.file_new_for_uri(trash_path);
 
         this.text = text;
@@ -173,8 +173,7 @@ TrashMenuItem.prototype =
         this.monitor = this.trash_file.monitor_directory(0, null, null);
         this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
-    
-    
+        
     _trashItemBase: function()
     {
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });        
@@ -383,7 +382,7 @@ MyApplet.prototype =
                 this.menu.addMenuItem(this._bookmarksSection);
             }
             
-            // Monitor bokkmarks changes - still working on this one ...
+            // Monitor bookmarks changes - still working on this one ...
             //this._addBookmarksWatch();
             Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
         }   
