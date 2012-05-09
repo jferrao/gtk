@@ -3,7 +3,7 @@
  * Version: 1.1
  * 
  * @developer jferrao <jferrao@ymail.com>
- * @url https://github.com/jferrao/gtk
+ * @url http://jferrao.github.com/gtk
  * 
  */
 
@@ -15,10 +15,11 @@
  * You can edit this true or false values to customize the look & feel of the applet.
  * Restart Cinnamon (Alt+F2 + r + Enter) may be needed for changes to take effect.
  */
- 
+
 SHOW_PANEL_ICON         = true;
 USE_FULL_COLOR_ICON     = false;
 SHOW_PANEL_TEXT         = false;
+
 SHOW_DESKTOP            = true;
 AUTO_HIDE_TRASH         = false;
 SHOW_BOOKMARKS          = true;

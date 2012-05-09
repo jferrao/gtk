@@ -3,7 +3,7 @@
  * Version: 1.0
  * 
  * @developer jferrao <jferrao@ymail.com>
- * @url https://github.com/jferrao/gtk 
+ * @url http://jferrao.github.com/gtk
  * 
  */
 
@@ -15,7 +15,10 @@
  * You can edit this true/false values to costumize the look & feel of the applet.
  * Restart Gnome Shell (Alt+F2 + r + Enter) may be needed for changes to take effect.
  */
-SHOW_DESKTOP            = false;
+ 
+LEFT_PANEL_MENU         = false;
+
+SHOW_DESKTOP            = true;
 AUTO_HIDE_TRASH         = false;
 SHOW_BOOKMARKS          = true;
 COLLAPSE_BOOKMARKS      = false;
@@ -26,9 +29,9 @@ COLLAPSE_NETWORK        = false;
 SHOW_SEARCH             = true;
 SHOW_RECENT_DOCUMENTS   = true;
 
-const RECENT_ITEMS      = 10;
+ICON_SIZE               = 22;
 
-const ICON_SIZE         = 22;
+RECENT_ITEMS            = 10;
 
 /**
  * Ok, that's enough editing. ------------------------------------------
@@ -55,7 +58,6 @@ const _ = Gettext.gettext;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const FileUtils = imports.misc.fileUtils;
-
 
 /**
  * Messages for the confirmation dialog boxes.
@@ -310,8 +312,12 @@ AllInOnePlaces.prototype =
 
     _init: function()
     {
-        PanelMenu.SystemStatusButton.prototype._init.call(this, "folder");
+        PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
         this.setTooltip(_("Places"));
+
+        this.label = new St.Label({ text: _("Places") });
+        this.actor.add_actor(this.label);
+
 
         this._display();
     },
@@ -326,11 +332,9 @@ AllInOnePlaces.prototype =
         this._createHome();
 
         // Show desktop section
-        /* Buggy and not implemented yet.
         if (SHOW_DESKTOP) {
             this._createDesktop();
         }
-        */
 
         // Show trash item
         this._createTrash();
@@ -453,7 +457,8 @@ AllInOnePlaces.prototype =
         let icon = new St.Icon({icon_name: 'user-desktop', icon_size: ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
         this.desktopItem = new MenuItem(icon, _("Desktop"));
         this.desktopItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus \"" + FileUtils.getUserDesktopDir().replace(" ","\ ") + "\"");
+            let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
+            new launch().command("nautilus \"" + desktop_folder.replace(" ","\ ") + "\"");
         });
         this.menu.addMenuItem(this.desktopItem);
     },
@@ -685,13 +690,14 @@ let _indicator;
 function enable() {
     _indicator = new AllInOnePlaces();
 
-    // Icon on the LeftPanel 
-    //Main.panel._leftBox.insert_actor(_indicator.actor, 1);
-    //Main.panel._leftBox.child_set(_indicator.actor, { y_fill : true } );
-    //Main.panel._menus.addMenu(_indicator.menu);
-
-    // Icon on the RightPanel 
-    Main.panel.addToStatusArea('all-in-one-places', _indicator);
+    // Icon on the Left or right panel
+    if (LEFT_PANEL_MENU) {
+        Main.panel._leftBox.insert_actor(_indicator.actor, 1);
+        Main.panel._leftBox.child_set(_indicator.actor, { y_fill : true } );
+        Main.panel._menus.addMenu(_indicator.menu);
+    } else {
+        Main.panel.addToStatusArea('all-in-one-places', _indicator);
+    }
 }
 
 function disable() {
