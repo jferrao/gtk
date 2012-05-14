@@ -167,7 +167,7 @@ TrashMenuItem.prototype =
     {
         this.monitor.disconnect(this._trashConn);
         this.parent();
-    },    
+    },
     
     _trashItemBase: function(icon)
     {
@@ -267,11 +267,9 @@ ConfirmationDialog.prototype =
         mainContentBox.add(messageBox, { y_align: St.Align.START });
 
         this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline', text: dialogLabel });
-
         messageBox.add(this._subjectLabel, { y_fill: false, y_align: St.Align.START });
 
         this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description', text: dialogMessage });
-
         messageBox.add(this._descriptionLabel, { y_fill: true, y_align: St.Align.START });
 
         this.setButtons([

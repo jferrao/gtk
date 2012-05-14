@@ -175,9 +175,15 @@ TrashMenuItem.prototype =
         this._checkTrashStatus();
 
         this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
+        this._trashConn = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
-        
+
+    destroy: function()
+    {
+        this.monitor.disconnect(this._trashConn);
+        this.parent();
+    },
+
     _trashItemBase: function()
     {
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });        
@@ -389,7 +395,7 @@ MyApplet.prototype =
             
             // Monitor bookmarks changes - still working on this one ...
             //this._addBookmarksWatch();
-            Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
+            this._bookmarksConn = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
         }   
         
         // Show computer item
@@ -414,7 +420,7 @@ MyApplet.prototype =
             }
             
             // Monitor mounts changes
-            Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
+            this._devicesConn = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
         }
 
         // Show network section
@@ -448,10 +454,20 @@ MyApplet.prototype =
                 this._createRecent();
             
                 // Monitor recent documents changes
-                this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+                this._recentConn = this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
             }
         }
         
+    },
+
+    destroy: function()
+    {
+        // Disconnecting signals
+        if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
+        if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
+        if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
+
+        this.parent();
     },
 
     /**
