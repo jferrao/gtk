@@ -56,10 +56,6 @@ defaultConfig = {
     "RECENT_ITEMS": 10
 };
 
-
-
-
-
 /**
  * Messages for the confirmation dialog boxes.
  */
@@ -363,6 +359,11 @@ AllInOnePlaces.prototype =
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._createComputer();
 
+        // Show File System item
+        if (config.SHOW_FILE_SYSTEM) {
+            this._createFileSystem();
+        }
+
         // Show devices section
         if (config.SHOW_DEVICES) {
             if (config.COLLAPSE_DEVICES) {
@@ -437,6 +438,19 @@ AllInOnePlaces.prototype =
             new launch().command("nautilus computer://");
         });
         this.menu.addMenuItem(this.computerItem);
+    },
+    
+    /**
+     * Build file system section
+     */
+    _createFileSystem: function()
+    {
+        let icon = new St.Icon({icon_name: 'drive-harddisk', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this.filesystemItem = new MenuItem(icon, _("File System"));
+        this.filesystemItem.connect('activate', function(actor, event) {
+            new launch().command("nautilus /");
+        });
+        this.menu.addMenuItem(this.filesystemItem);
     },
 
     /**
