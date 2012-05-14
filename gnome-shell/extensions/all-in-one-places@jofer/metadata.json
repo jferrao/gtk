@@ -1,7 +1,7 @@
 {
     "uuid": "all-in-one-places@jofer",
     "name": "All-in-one Places",
-    "description": "All-in-one quick navigation to places based on the Gnome Classic places menu with a few extra configuration options to change the look and feel of the extension such as: show or hide the sections that better fits your needs; choose between normal or collapsable menus to save vertical screen space; trash menu item with empty trash option; devices menu items with eject option.",
+    "description": "All-in-one quick navigation to places and devices with a few extra configuration options to change the look and feel of the extension.",
     "url": "http://jferrao.github.com/gtk",
     "shell-version": [
         "3.2"
