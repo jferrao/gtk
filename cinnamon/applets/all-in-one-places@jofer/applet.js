@@ -1,6 +1,6 @@
 /**
  * All-in-one Places applet for Cinnamon
- * Version: 1.1
+ * Version: 1.2
  * 
  * @developer jferrao <jferrao@ymail.com>
  * @url http://jferrao.github.com/gtk
@@ -34,12 +34,15 @@ const FileUtils = imports.misc.fileUtils;
 
 
 
+/**
+ * Global to store configuration values.
+ */
 config = null;
 
 /**
  * Default configuration options in case something goes wrong with the config.json file.
  */
-defaultConfig = {
+const DEFAULT_CONFIG = {
     "SHOW_PANEL_ICON": true,
     "USE_FULL_COLOR_ICON": false,
     "SHOW_PANEL_TEXT": false,
@@ -58,6 +61,8 @@ defaultConfig = {
     "ICON_SIZE": 22,
     "RECENT_ITEMS": 10
 };
+
+const CONFIG_FILE    = 'applets/all-in-one-places@jofer/config.json';
 
 /**
  * Messages for the confirmation dialog boxes.
@@ -314,7 +319,7 @@ MyApplet.prototype =
     {
         Applet.TextIconApplet.prototype._init.call(this, orientation);
 
-        this._getConfig();
+        this.getConfig();
 
         try {
             if (!config.SHOW_PANEL_ICON && !config.SHOW_PANEL_TEXT) {
@@ -704,15 +709,17 @@ MyApplet.prototype =
         new launch().file(c);
     },
     
-    _getConfig: function()
+    /**
+     * Get configuration values from config.json file. 
+     */
+    getConfig: function()
     {
-        let configFile = GLib.build_filenamev([global.userdatadir, 'applets/all-in-one-places@jofer/config.json']);
+        let configFile = GLib.build_filenamev([global.userdatadir, CONFIG_FILE]);
         try {
             config = JSON.parse(Cinnamon.get_file_contents_utf8_sync(configFile));
-            // For Gnome-Shell ???
-            // this.config = JSON.parse(Shell.get_file_contents_utf8_sync(configFile));
         } catch (e) {
-            config = defaultConfig;
+            // If something goes wrong with the configuration file we use the default configuration values.
+            config = DEFAULT_CONFIG;
         }
     }
     
