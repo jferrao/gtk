@@ -200,12 +200,20 @@ class MyWindow(Gtk.Window):
 class check_option():
     
     def create(self, box, key, value, label):
-        widget = Gtk.CheckButton(label)
-        widget.set_active(value)
-        widget.connect('toggled', self.change_state, key)
-        box.pack_start(widget, True, True, 0)        
+        innerbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 40)
 
-    def change_state(self, widget, key):
+        widget = Gtk.Switch()
+        widget.set_active(value)
+        widget.connect('notify::active', self.change_state, key)
+
+        label = Gtk.Label(label)
+
+        innerbox.pack_start(label, False, False, 10)
+        innerbox.pack_start(widget, False, False, 0)        
+
+        box.pack_start(innerbox, False, False, 0)        
+
+    def change_state(self, widget, notice, key):
         global config
         if (config.has_key(key)):
             config[key] = widget.get_active();
