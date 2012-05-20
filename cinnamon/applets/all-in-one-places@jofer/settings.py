@@ -172,7 +172,8 @@ class MyWindow(Gtk.Window):
         # Icon size slider
         box_icon_size = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
        
-        adjust_icon_size = Gtk.Adjustment(22, 16, 96, 6, 6, 0)
+        adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
+        adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
         slider_icon_size = Gtk.HScale()
         slider_icon_size.set_adjustment(adjust_icon_size)
         slider_icon_size.set_digits(0)
@@ -185,7 +186,8 @@ class MyWindow(Gtk.Window):
         # Number of recent documents slider
         box_documents = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         
-        adjust_documents = Gtk.Adjustment(10, 5, 25, 1, 5, 0)
+        adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
+        adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
         slider_documents = Gtk.HScale()
         slider_documents.set_adjustment(adjust_documents)
         slider_documents.set_digits(0)
@@ -240,6 +242,12 @@ class MyWindow(Gtk.Window):
         config['PANEL_TEXT'] = text_widget.get_text()
         if (opts.verbose):
             print "changed key 'PANEL_TEXT' => %s" % text_widget.get_text()
+        save_config()
+
+    def on_slider_change(self, widget, key):
+        config[key] = int(widget.get_value())
+        if (opts.verbose):
+            print "changed key %s => %s" % (key, int(widget.get_value()))
         save_config()
 
     def restart_shell(self, widget):
