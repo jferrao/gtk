@@ -351,6 +351,11 @@ MyApplet.prototype =
             this.menu = new Applet.AppletPopupMenu(this, orientation);
             this.menuManager.addMenu(this.menu);
 
+            // Add edit settings context menu item
+            let settings_menu_item = new Applet.MenuItem(_("Edit settings"), Gtk.STOCK_EDIT, 
+                    Lang.bind(this, this._launchSettings));
+            this._applet_context_menu.addMenuItem(settings_menu_item);
+
             this._display();
         }
         catch (e) {
@@ -723,6 +728,12 @@ MyApplet.prototype =
     _openRecentFile: function(a, b, c)
     {
         new launch().file(c);
+    },
+    
+    _launchSettings: function()
+    {
+        let settingsFile = GLib.build_filenamev([global.userdatadir, "applets/all-in-one-places@jofer/settings.py"]); 
+        new launch().command("python " + settingsFile);
     },
     
     /**

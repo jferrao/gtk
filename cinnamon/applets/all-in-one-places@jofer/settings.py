@@ -12,7 +12,7 @@ Requires Python 2.7
 
 from optparse import OptionParser
 from gi.repository import Gtk
-import os
+import os, sys
 import json
 import collections
 
@@ -21,7 +21,7 @@ from gettext import gettext as _
 
 
 config = None
-config_file = "./config.json"
+config_file = os.path.dirname(sys.argv[0]) + "/config.json"
 
 
 
@@ -196,7 +196,6 @@ class MyWindow(Gtk.Window):
         box_documents.pack_start(slider_documents, False, False, 0)        
 
         vbox_right.pack_start(box_documents, False, False, 0)
-
         
         # Build extra options
         #self.restart = False
