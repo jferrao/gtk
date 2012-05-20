@@ -10,27 +10,52 @@ Requires Python 2.7
 '''
 
 
-
+from optparse import OptionParser
 from gi.repository import Gtk
 import os
 import json
 import collections
+
 from gettext import gettext as _
 
 
 
 config = None
+config_file = "./config.json"
+
+
+
+def load_config():
+    global config
+    f = open(config_file, 'r')
+    config = json.loads(f.read(), object_pairs_hook=collections.OrderedDict)
+    f.close()
+    if (opts.verbose):
+        print "config file loaded"
+
+def save_config():
+    f = open(config_file, 'w')
+    f.write(json.dumps(config, sort_keys=False, indent=4))
+    f.close()
+    if (opts.verbose):
+        print "config file saved"
+
+
 
 
 
 class MyWindow(Gtk.Window):
 
+    restart = False
+
     def __init__(self):
         
         Gtk.Window.__init__(self, title="All-in-one Places Appplet Settings")
 
-        self.set_border_width(10)
-
+        #self.set_icon_from_file("all-in-one-places-icon.png")
+        self.set_position(3)
+        self.set_border_width(15)
+        
         box_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         box_container.set_homogeneous(False)
 
@@ -42,17 +67,13 @@ class MyWindow(Gtk.Window):
         vbox_left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_left.set_homogeneous(False)
 
-        # Center options column
-        vbox_center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        vbox_center.set_homogeneous(False)
-        
         # Righ options column
         vbox_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_right.set_homogeneous(False)
 
-        box_options.pack_start(vbox_left, True, True, 0)
-        box_options.pack_start(vbox_center, True, True, 0)
-        box_options.pack_start(vbox_right, True, True, 0)
+        box_options.pack_start(vbox_left, False, False, 0)
+        box_options.pack_start(Gtk.VSeparator(), True, True, 0)
+        box_options.pack_start(vbox_right, False, False, 0)
 
         # Bottom options box
         box_extra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -69,15 +90,15 @@ class MyWindow(Gtk.Window):
 
         # Build options for left column
         if (config.has_key('SHOW_PANEL_ICON')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'SHOW_PANEL_ICON', config['SHOW_PANEL_ICON'], "Show panel icon")
 
         if (config.has_key('USE_FULL_COLOR_ICON')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'USE_FULL_COLOR_ICON', config['USE_FULL_COLOR_ICON'], "Use full color icon")
 
         if (config.has_key('SHOW_PANEL_TEXT')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'SHOW_PANEL_TEXT', config['SHOW_PANEL_TEXT'], "Show panel text")
 
         if (config.has_key('PANEL_TEXT')):
@@ -89,84 +110,86 @@ class MyWindow(Gtk.Window):
             
             # Custom text entry
             self.entry_panel_text = Gtk.Entry()
-            self.entry_panel_text.connect('changed', self.print_event)
             if (use_custom_panel_text):
                 if (config['PANEL_TEXT'] != None):
-                    self.entry_panel_text.set_text(panel_text)
+                    self.entry_panel_text.set_text(config['PANEL_TEXT'])
             else:
                 self.entry_panel_text.set_sensitive(False)
             vbox_left.pack_start(self.entry_panel_text, True, True, 0) 
             
             # Connect events
-            self.check_custom_text.connect('toggled', self.change_custom_text_state, self.entry_panel_text)
+            self.check_custom_text.connect('toggled', self.on_check_custom_text_change, self.entry_panel_text)
+            self.entry_panel_text.connect('changed', self.on_custom_text_change)
+            
+        vbox_left.pack_start(Gtk.HSeparator(), True, True, 0)
 
         if (config.has_key('SHOW_DESKTOP')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'SHOW_DESKTOP', config['SHOW_DESKTOP'], "Show desktop")
 
         if (config.has_key('AUTO_HIDE_TRASH')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'AUTO_HIDE_TRASH', config['AUTO_HIDE_TRASH'], "Auto hide trash")
 
         if (config.has_key('SHOW_FILE_SYSTEM')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_left, 'SHOW_FILE_SYSTEM', config['SHOW_FILE_SYSTEM'], "Show file system")
 
-        # Build options for center column
+        # Build options for right column
         if (config.has_key('SHOW_BOOKMARKS')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'SHOW_BOOKMARKS', config['SHOW_BOOKMARKS'], "Show bookmarks section")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'SHOW_BOOKMARKS', config['SHOW_BOOKMARKS'], "Show bookmarks section")
 
         if (config.has_key('COLLAPSE_BOOKMARKS')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'COLLAPSE_BOOKMARKS', config['COLLAPSE_BOOKMARKS'], "Dropdown style bookmarks")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'COLLAPSE_BOOKMARKS', config['COLLAPSE_BOOKMARKS'], "Dropdown style bookmarks")
 
         if (config.has_key('SHOW_DEVICES')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'SHOW_DEVICES', config['SHOW_DEVICES'], "Show devices section")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'SHOW_DEVICES', config['SHOW_DEVICES'], "Show devices section")
 
         if (config.has_key('COLLAPSE_DEVICES')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'COLLAPSE_DEVICES', config['COLLAPSE_DEVICES'], "Dropdown style devices")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'COLLAPSE_DEVICES', config['COLLAPSE_DEVICES'], "Dropdown style devices")
 
         if (config.has_key('SHOW_NETWORK')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'SHOW_NETWORK', config['SHOW_NETWORK'], "Show network section")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'SHOW_NETWORK', config['SHOW_NETWORK'], "Show network section")
 
         if (config.has_key('COLLAPSE_NETWORK')):
-            check_show_panel = check_option()
-            check_show_panel.create(vbox_center, 'COLLAPSE_NETWORK', config['COLLAPSE_NETWORK'], "Dropdown style network")
+            check_show_panel = switch_option()
+            check_show_panel.create(vbox_right, 'COLLAPSE_NETWORK', config['COLLAPSE_NETWORK'], "Dropdown style network")
 
-        # Build options for right column
         if (config.has_key('SHOW_SEARCH')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_right, 'SHOW_SEARCH', config['SHOW_SEARCH'], "Show search")
 
         if (config.has_key('SHOW_RECENT_DOCUMENTS')):
-            check_show_panel = check_option()
+            check_show_panel = switch_option()
             check_show_panel.create(vbox_right, 'SHOW_RECENT_DOCUMENTS', config['SHOW_RECENT_DOCUMENTS'], "Show recent documents section")
         
         # Build extra options
-        self.restart = False
-        self.check_restart = Gtk.CheckButton("Restart Cinnamon on close")
-        self.check_restart.connect('toggled', self.change_restart_status)
-        self.check_restart.set_active(False)
-        box_extra.pack_start(self.check_restart, True, True, 0)        
+        #self.restart = False
+        #self.check_restart = Gtk.CheckButton("Restart Cinnamon on close")
+        #self.check_restart.connect('toggled', self.change_restart_status)
+        #self.check_restart.set_active(False)
+        #box_extra.pack_start(self.check_restart, True, True, 0)        
 
         # Build buttons
-        bt_restart = Gtk.Button(_("Restart Cinnamon"))
-        bt_restart.connect('clicked', self.restart_shell)
-        box_buttons.pack_start(bt_restart, False, True, 0)
+        bnt_close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
+        bnt_close.connect('clicked', self.exit_application)
+        box_buttons.pack_end(bnt_close, False, True, 0)
 
-        bt_close = Gtk.Button(_("Close"))
-        bt_close.connect('clicked', self.exit_application)
-        box_buttons.pack_start(bt_close, False, True, 0)
+        img_restart = Gtk.Image()
+        img_restart.set_from_stock(Gtk.STOCK_APPLY, 3)
+        bnt_restart = Gtk.Button(_("Restart Cinnamon"))
+        bnt_restart.set_property("image", img_restart)
+        bnt_restart.connect('clicked', self.restart_shell)
+        box_buttons.pack_end(bnt_restart, False, True, 0)
 
         self.add(box_container)
 
 
-    def print_event(self, widget):
-        print "hello"
 
     def change_restart_status(self, widget):
         if widget.get_active():
@@ -174,13 +197,22 @@ class MyWindow(Gtk.Window):
         else:
             self.restart = False
 
-    def change_custom_text_state(self, option_control, text_control):
-        if option_control.get_active():
-            text_control.set_sensitive(True)
-            text_control.grab_focus()
+    def on_check_custom_text_change(self, option_widget, text_widget):
+        if option_widget.get_active():
+            text_widget.set_sensitive(True)
+            text_widget.grab_focus()
         else:
-            text_control.set_sensitive(False)
-        print "changed"
+            text_widget.set_sensitive(False)
+            config['PANEL_TEXT'] = None
+            if (opts.verbose):
+                print "changed key 'PANEL_TEXT' => %s" % None
+            save_config()
+
+    def on_custom_text_change(self, text_widget):
+        config['PANEL_TEXT'] = text_widget.get_text()
+        if (opts.verbose):
+            print "changed key 'PANEL_TEXT' => %s" % text_widget.get_text()
+        save_config()
 
     def restart_shell(self, widget):
         os.system('cinnamon --replace &')
@@ -197,53 +229,43 @@ class MyWindow(Gtk.Window):
 
 
 
-class check_option():
+class switch_option():
     
-    def create(self, box, key, value, label):
-        innerbox = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 40)
-
+    def create(self, container, key, value, label):
+        box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 20)
+        label = Gtk.Label(label)
+        
         widget = Gtk.Switch()
         widget.set_active(value)
         widget.connect('notify::active', self.change_state, key)
 
-        label = Gtk.Label(label)
+        box.pack_start(label, False, False, 0)
+        box.pack_end(widget, False, False, 0)        
 
-        innerbox.pack_start(label, False, False, 10)
-        innerbox.pack_start(widget, False, False, 0)        
-
-        box.pack_start(innerbox, False, False, 0)        
+        container.add(box)        
 
     def change_state(self, widget, notice, key):
         global config
         if (config.has_key(key)):
             config[key] = widget.get_active();
+            if (opts.verbose):
+                print "changed key %s => %s" % (key, widget.get_active())
         save_config()
-        print "changed"
 
 
 
 
 
-def load_config():
-    global config
-    f = open("./config.json", 'r')
-    config = json.loads(f.read(), object_pairs_hook=collections.OrderedDict)
-    f.close()
-    print "loaded config"
+if __name__ == "__main__":
 
-def save_config():
-    f = open("./config.json", 'w')
-    f.write(json.dumps(config, sort_keys=False, indent=4))
-    f.close()
-    print "saved config"
+    parser = OptionParser()
+    parser.add_option("-v", "--verbose", action="store_true", default=False, dest="verbose", help="print event and action messages")
+    (opts, args) = parser.parse_args()
+    
+    load_config()
 
-
-
-
-load_config()
-
-win = MyWindow()
-win.connect("delete-event", Gtk.main_quit)
-win.show_all()
-Gtk.main()
+    win = MyWindow()
+    win.connect("delete-event", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
     
