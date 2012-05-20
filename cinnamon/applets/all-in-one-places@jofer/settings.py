@@ -56,13 +56,9 @@ class MyWindow(Gtk.Window):
         self.set_position(3)
         self.set_border_width(15)
         
-        box_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=30)
         box_container.set_homogeneous(False)
 
-        # Container box
-        box_options = Gtk.Box(spacing=10)
-        box_options.set_homogeneous(False)
-        
         # Left options column
         vbox_left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_left.set_homogeneous(False)
@@ -71,20 +67,23 @@ class MyWindow(Gtk.Window):
         vbox_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_right.set_homogeneous(False)
 
+        # Columns options container box
+        box_options = Gtk.Box(spacing=15)
+        box_options.set_homogeneous(False)
         box_options.pack_start(vbox_left, False, False, 0)
-        box_options.pack_start(Gtk.VSeparator(), True, True, 0)
+        box_options.pack_start(Gtk.VSeparator(), False, False, 0)
         box_options.pack_start(vbox_right, False, False, 0)
 
         # Bottom options box
-        box_extra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        box_extra.set_homogeneous(False)
+        #box_extra = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        #box_extra.set_homogeneous(False)
 
         # Buttons box
         box_buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         box_buttons.set_homogeneous(False)
         
         box_container.pack_start(box_options, True, True, 0)
-        box_container.pack_start(box_extra, True, True, 0)
+        #box_container.pack_start(box_extra, True, True, 0)
         box_container.pack_start(box_buttons, True, True, 0)
 
 
@@ -106,7 +105,7 @@ class MyWindow(Gtk.Window):
             # Custom text option
             self.check_custom_text = Gtk.CheckButton("Use custom panel text")
             self.check_custom_text.set_active(use_custom_panel_text)
-            vbox_left.pack_start(self.check_custom_text, True, True, 0)        
+            vbox_left.pack_start(self.check_custom_text, False, False, 0)        
             
             # Custom text entry
             self.entry_panel_text = Gtk.Entry()
@@ -115,13 +114,13 @@ class MyWindow(Gtk.Window):
                     self.entry_panel_text.set_text(config['PANEL_TEXT'])
             else:
                 self.entry_panel_text.set_sensitive(False)
-            vbox_left.pack_start(self.entry_panel_text, True, True, 0) 
+            vbox_left.pack_start(self.entry_panel_text, False, False, 0) 
             
             # Connect events
             self.check_custom_text.connect('toggled', self.on_check_custom_text_change, self.entry_panel_text)
             self.entry_panel_text.connect('changed', self.on_custom_text_change)
             
-        vbox_left.pack_start(Gtk.HSeparator(), True, True, 0)
+        vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
 
         if (config.has_key('SHOW_DESKTOP')):
             check_show_panel = switch_option()
@@ -167,6 +166,35 @@ class MyWindow(Gtk.Window):
         if (config.has_key('SHOW_RECENT_DOCUMENTS')):
             check_show_panel = switch_option()
             check_show_panel.create(vbox_right, 'SHOW_RECENT_DOCUMENTS', config['SHOW_RECENT_DOCUMENTS'], "Show recent documents section")
+        
+        vbox_right.pack_start(Gtk.HSeparator(), False, False, 0)
+        
+        # Icon size slider
+        box_icon_size = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+       
+        adjust_icon_size = Gtk.Adjustment(22, 16, 96, 6, 6, 0)
+        slider_icon_size = Gtk.HScale()
+        slider_icon_size.set_adjustment(adjust_icon_size)
+        slider_icon_size.set_digits(0)
+
+        box_icon_size.pack_start(Gtk.Label(_("Icon size")), False, False, 0)
+        box_icon_size.pack_start(slider_icon_size, False, False, 0)        
+
+        vbox_right.pack_start(box_icon_size, False, False, 0)
+
+        # Number of recent documents slider
+        box_documents = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        
+        adjust_documents = Gtk.Adjustment(10, 5, 25, 1, 5, 0)
+        slider_documents = Gtk.HScale()
+        slider_documents.set_adjustment(adjust_documents)
+        slider_documents.set_digits(0)
+
+        box_documents.pack_start(Gtk.Label(_("Number of recent documents")), False, False, 0)
+        box_documents.pack_start(slider_documents, False, False, 0)        
+
+        vbox_right.pack_start(box_documents, False, False, 0)
+
         
         # Build extra options
         #self.restart = False
