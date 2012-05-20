@@ -114,7 +114,7 @@ DeviceMenuItem.prototype =
         this.addActor(icon);
         
         let ejectIcon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        let ejectButton = new St.Button({ child: ejectIcon, tooltip_text: _("Eject") });
+        let ejectButton = new St.Button({ child: ejectIcon });
         ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
         this.addActor(ejectButton);
     },
@@ -188,7 +188,7 @@ TrashMenuItem.prototype =
         this._trashItemBase(this.icon);
         
         let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.emptyButton = new St.Button({ child: emptyIcon, tooltip_text: _("Empty Trash") });
+        this.emptyButton = new St.Button({ child: emptyIcon });
         this.emptyButton.connect('clicked', Lang.bind(this, this._emptyTrash));
         this.addActor(this.emptyButton);
     },
@@ -311,8 +311,6 @@ AllInOnePlaces.prototype =
         
         this._getConfig();
         
-        this.setTooltip(_("Places"));
-
         this.label = new St.Label({ text: _("Places") });
         this.actor.add_actor(this.label);
 
