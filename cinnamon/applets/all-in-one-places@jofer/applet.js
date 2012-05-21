@@ -1,6 +1,6 @@
 /**
  * All-in-one Places applet for Cinnamon
- * Version: 1.2
+ * Version: 1.3 RC 1
  * 
  * @developer jferrao <jferrao@ymail.com>
  * @url http://jferrao.github.com/gtk

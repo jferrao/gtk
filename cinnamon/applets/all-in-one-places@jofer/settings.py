@@ -52,19 +52,21 @@ class MyWindow(Gtk.Window):
         
         Gtk.Window.__init__(self, title="All-in-one Places Appplet Settings")
 
-        #self.set_icon_from_file("all-in-one-places-icon.png")
+        window_icon = self.render_icon(Gtk.STOCK_PREFERENCES, 6)
+        self.set_icon(window_icon)
+
         self.set_position(3)
         self.set_border_width(15)
         
-        box_container = Gtk.VBox(spacing=30)
+        box_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=30)
         box_container.set_homogeneous(False)
 
         # Left options column
-        vbox_left = Gtk.VBox(spacing=10)
+        vbox_left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_left.set_homogeneous(False)
 
         # Righ options column
-        vbox_right = Gtk.VBox(spacing=10)
+        vbox_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         vbox_right.set_homogeneous(False)
 
         # Columns options container box
@@ -170,7 +172,7 @@ class MyWindow(Gtk.Window):
         vbox_right.pack_start(Gtk.HSeparator(), False, False, 0)
         
         # Icon size slider
-        box_icon_size = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box_icon_size = Gtk.VBox(0)
        
         adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
         adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
@@ -184,7 +186,7 @@ class MyWindow(Gtk.Window):
         vbox_right.pack_start(box_icon_size, False, False, 0)
 
         # Number of recent documents slider
-        box_documents = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+        box_documents = Gtk.VBox(0)
         
         adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
         adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
@@ -205,16 +207,23 @@ class MyWindow(Gtk.Window):
         #box_extra.pack_start(self.check_restart, True, True, 0)        
 
         # Build buttons
-        bnt_close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
-        bnt_close.connect('clicked', self.exit_application)
-        box_buttons.pack_end(bnt_close, False, True, 0)
+        img_default = Gtk.Image()
+        img_default.set_from_stock(Gtk.STOCK_PROPERTIES, 3)
+        btn_default = Gtk.Button(_("Default settings"))
+        btn_default.set_property("image", img_default)
+        btn_default.connect('clicked', self.generate_config_file)
+        box_buttons.pack_start(btn_default, False, False, 0)
+        
+        btn_close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
+        btn_close.connect('clicked', self.exit_application)
+        box_buttons.pack_end(btn_close, False, False, 0)
 
         img_restart = Gtk.Image()
-        img_restart.set_from_stock(Gtk.STOCK_APPLY, 3)
-        bnt_restart = Gtk.Button(_("Restart Cinnamon"))
-        bnt_restart.set_property("image", img_restart)
-        bnt_restart.connect('clicked', self.restart_shell)
-        box_buttons.pack_end(bnt_restart, False, True, 0)
+        img_restart.set_from_stock(Gtk.STOCK_REFRESH, 3)
+        btn_restart = Gtk.Button(_("Restart Cinnamon"))
+        btn_restart.set_property("image", img_restart)
+        btn_restart.connect('clicked', self.restart_shell)
+        box_buttons.pack_end(btn_restart, False, False, 0)
 
         self.add(box_container)
 
@@ -249,6 +258,10 @@ class MyWindow(Gtk.Window):
             print "changed key %s => %s" % (key, int(widget.get_value()))
         save_config()
 
+    def generate_config_file(self, widget):
+        if (opts.verbose):
+            print "new default config file generated"
+    
     def restart_shell(self, widget):
         os.system('cinnamon --replace &')
         self.check_restart.set_active(False)
@@ -268,6 +281,7 @@ class switch_option():
     
     def create(self, container, key, value, label):
         box = Gtk.HBox(spacing=20)
+        box.set_homogeneous(False)
         label = Gtk.Label(label)
         
         widget = Gtk.Switch()
