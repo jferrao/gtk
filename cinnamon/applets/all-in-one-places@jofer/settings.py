@@ -21,7 +21,7 @@ from gettext import gettext as _
 
 
 config = None
-config_file = os.path.dirname(sys.argv[0]) + "/config.json"
+config_file = os.getcwd() + "/config.json"
 
 
 
@@ -56,19 +56,19 @@ class MyWindow(Gtk.Window):
         self.set_position(3)
         self.set_border_width(15)
         
-        box_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=30)
+        box_container = Gtk.VBox(spacing=30)
         box_container.set_homogeneous(False)
 
         # Left options column
-        vbox_left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        vbox_left = Gtk.VBox(spacing=10)
         vbox_left.set_homogeneous(False)
 
         # Righ options column
-        vbox_right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        vbox_right = Gtk.VBox(spacing=10)
         vbox_right.set_homogeneous(False)
 
         # Columns options container box
-        box_options = Gtk.Box(spacing=15)
+        box_options = Gtk.HBox(spacing=15)
         box_options.set_homogeneous(False)
         box_options.pack_start(vbox_left, False, False, 0)
         box_options.pack_start(Gtk.VSeparator(), False, False, 0)
@@ -79,7 +79,7 @@ class MyWindow(Gtk.Window):
         #box_extra.set_homogeneous(False)
 
         # Buttons box
-        box_buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        box_buttons = Gtk.HBox(spacing=10)
         box_buttons.set_homogeneous(False)
         
         box_container.pack_start(box_options, True, True, 0)
@@ -267,7 +267,7 @@ class MyWindow(Gtk.Window):
 class switch_option():
     
     def create(self, container, key, value, label):
-        box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 20)
+        box = Gtk.HBox(spacing=20)
         label = Gtk.Label(label)
         
         widget = Gtk.Switch()
