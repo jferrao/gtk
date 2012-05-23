@@ -1,6 +1,6 @@
 /**
  * All-in-one Places extension for Gnome Shell
- * Version: 1.0
+ * Version: 1.2.1
  * 
  * @developer jferrao <jferrao@ymail.com>
  * @url http://jferrao.github.com/gtk
@@ -166,7 +166,7 @@ TrashMenuItem.prototype =
     destroy: function()
     {
         this.monitor.disconnect(this._trashConn);
-        this.parent();
+        this.actor.destroy();
     },
     
     _trashItemBase: function(icon)
@@ -413,14 +413,14 @@ AllInOnePlaces.prototype =
         
     },
 
-    destroy: function()
+    /**
+     * Disconnect signals
+     */
+    disconnect: function()
     {
-        // Disconnecting signals
         if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
         if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
         if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
-
-        this.parent();
     },
 
     /**
@@ -715,7 +715,7 @@ function enable() {
 
     // Icon on the Left or right panel
     if (config.LEFT_PANEL_MENU) {
-        Main.panel._leftBox.insert_actor(_indicator.actor, 1);
+        Main.panel._leftBox.insert_child_at_index(_indicator.actor, 1);
         Main.panel._leftBox.child_set(_indicator.actor, { y_fill : true } );
         Main.panel._menus.addMenu(_indicator.menu);
     } else {
@@ -724,5 +724,6 @@ function enable() {
 }
 
 function disable() {
+    _indicator.disconnect();
     _indicator.destroy();
 }
