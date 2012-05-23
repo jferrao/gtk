@@ -1,5 +1,5 @@
 {
-    "LEFT_PANEL_MENU": true,
+    "LEFT_PANEL_MENU": false,
     "SHOW_DESKTOP": true,
     "AUTO_HIDE_TRASH": false,
     "SHOW_BOOKMARKS": true,
