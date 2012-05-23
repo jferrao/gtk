@@ -163,11 +163,11 @@ TrashMenuItem.prototype =
         this._trashConn = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
     
-    destroy: function()
-    {
-        this.monitor.disconnect(this._trashConn);
-        this.parent();
-    },
+    //destroy: function()
+    //{
+    //    this.monitor.disconnect(this._trashConn);
+    //    this.parent();
+    //},
     
     _trashItemBase: function(icon)
     {
@@ -413,15 +413,18 @@ AllInOnePlaces.prototype =
         
     },
 
-    destroy: function()
-    {
+    //destroy: function()
+    //{
         // Disconnecting signals
-        if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
-        if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
-        if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
+        //if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
+        //if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
+        //if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
 
-        this.parent();
-    },
+        //this.destroy();
+        //this.actor._delegate = null;
+        //this.actor.destroy();
+        //this.actor.emit('destroy'); 
+    //},
 
     /**
      * Build computer section
@@ -716,6 +719,7 @@ function enable() {
     // Icon on the Left or right panel
     if (config.LEFT_PANEL_MENU) {
         Main.panel._leftBox.insert_actor(_indicator.actor, 1);
+        //Main.panel._leftBox.insert_child_at_index(_indicator.actor, 1);
         Main.panel._leftBox.child_set(_indicator.actor, { y_fill : true } );
         Main.panel._menus.addMenu(_indicator.menu);
     } else {
