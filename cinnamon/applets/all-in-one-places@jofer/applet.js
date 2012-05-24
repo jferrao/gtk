@@ -1,9 +1,10 @@
 /**
  * All-in-one Places applet for Cinnamon
- * Version: 1.3 RC 1
+ * http://jferrao.github.com/gtk
  * 
- * @developer jferrao <jferrao@ymail.com>
- * @url http://jferrao.github.com/gtk
+ * 
+ * @author jferrao <jferrao@ymail.com>
+ * @version 1.3
  * 
  */
 
@@ -352,8 +353,7 @@ MyApplet.prototype =
             this.menuManager.addMenu(this.menu);
 
             // Add edit settings context menu item
-            let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, 
-                    Lang.bind(this, this._launchSettings));
+            let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, Lang.bind(this, this._launchSettings));
             this._applet_context_menu.addMenuItem(settings_menu_item);
 
             this._display();

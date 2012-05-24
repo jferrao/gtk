@@ -2,17 +2,23 @@
 
 '''
 Settings Application for the All-in-one Places applet for Cinnamon
+http://jferrao.github.com/gtk
+
 Requires Python 2.7
 
-@developer jferrao <jferrao@ymail.com>
-@url http://jferrao.github.com/gtk
+
+@author jferrao <jferrao@ymail.com>
+@version 1.0
 
 '''
 
 
+
+
+
 from optparse import OptionParser
 from gi.repository import Gtk
-import os, sys
+import os
 import json
 import collections
 
@@ -41,7 +47,7 @@ default_config = {
 }
 
 config = None
-config_file = os.getcwd() + "/config.json"
+config_file = os.path.dirname(os.path.abspath(__file__)) + "/config.json"
 
 
 
@@ -70,7 +76,7 @@ class MyWindow(Gtk.Window):
 
     def __init__(self):
         
-        Gtk.Window.__init__(self, title="All-in-one Places Appplet Settings")
+        Gtk.Window.__init__(self, title="All-in-one Places Applet Settings")
 
         window_icon = self.render_icon(Gtk.STOCK_PREFERENCES, 6)
         self.set_icon(window_icon)
@@ -163,7 +169,7 @@ class MyWindow(Gtk.Window):
 
         if (config.has_key('COLLAPSE_BOOKMARKS')):
             switch_drop_bookmarks = switch_option()
-            switch_drop_bookmarks.create(vbox_right, 'COLLAPSE_BOOKMARKS', config['COLLAPSE_BOOKMARKS'], "Dropdown style bookmarks")
+            switch_drop_bookmarks.create(vbox_right, 'COLLAPSE_BOOKMARKS', config['COLLAPSE_BOOKMARKS'], "Drop-down bookmarks")
 
         if (config.has_key('SHOW_DEVICES')):
             switch_show_devices = switch_option()
@@ -171,7 +177,7 @@ class MyWindow(Gtk.Window):
 
         if (config.has_key('COLLAPSE_DEVICES')):
             switch_drop_devices = switch_option()
-            switch_drop_devices.create(vbox_right, 'COLLAPSE_DEVICES', config['COLLAPSE_DEVICES'], "Dropdown style devices")
+            switch_drop_devices.create(vbox_right, 'COLLAPSE_DEVICES', config['COLLAPSE_DEVICES'], "Drop-down devices")
 
         if (config.has_key('SHOW_NETWORK')):
             switch_show_network = switch_option()
@@ -179,7 +185,7 @@ class MyWindow(Gtk.Window):
 
         if (config.has_key('COLLAPSE_NETWORK')):
             switch_drop_network = switch_option()
-            switch_drop_network.create(vbox_right, 'COLLAPSE_NETWORK', config['COLLAPSE_NETWORK'], "Dropdown style network")
+            switch_drop_network.create(vbox_right, 'COLLAPSE_NETWORK', config['COLLAPSE_NETWORK'], "Drop-down network")
 
         if (config.has_key('SHOW_SEARCH')):
             switch_show_search = switch_option()
