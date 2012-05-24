@@ -352,7 +352,7 @@ MyApplet.prototype =
             this.menuManager.addMenu(this.menu);
 
             // Add edit settings context menu item
-            let settings_menu_item = new Applet.MenuItem(_("Edit settings"), Gtk.STOCK_EDIT, 
+            let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, 
                     Lang.bind(this, this._launchSettings));
             this._applet_context_menu.addMenuItem(settings_menu_item);
 
