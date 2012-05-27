@@ -214,6 +214,7 @@ class MyWindow(Gtk.Window):
         save_config(default_config)
     
     def restart_shell(self, widget):
+        # Silent background process restart
         os.system("nohup gnome-shell --replace >/dev/null 2>&1&")
 
     def exit_application(self, widget):
