@@ -1,6 +1,5 @@
 /**
  * All-in-one Places extension for Gnome Shell
- *
  * http://jferrao.github.com/gtk
  * 
  * 
