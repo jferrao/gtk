@@ -69,8 +69,6 @@ def save_config(data):
 
 class MyWindow(Gtk.Window):
 
-    restart = False
-
     def __init__(self):
         
         Gtk.Window.__init__(self, title="All-in-one Places settings")
@@ -215,8 +213,8 @@ class MyWindow(Gtk.Window):
         save_config(default_config)
     
     def restart_shell(self, widget):
-        os.system('gnome-shell --replace &')
-        self.check_restart.set_active(False)
+        # Silent background process restart
+        os.system("nohup gnome-shell --replace >/dev/null 2>&1&")        
 
     def exit_application(self, widget):
         Gtk.main_quit()
