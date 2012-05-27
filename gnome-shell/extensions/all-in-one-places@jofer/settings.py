@@ -69,8 +69,6 @@ def save_config(data):
 
 class MyWindow(Gtk.Window):
 
-    restart = False
-
     def __init__(self):
         
         Gtk.Window.__init__(self, title="All-in-one Places settings")
@@ -124,6 +122,8 @@ class MyWindow(Gtk.Window):
         if (config.has_key('SHOW_FILE_SYSTEM')):
             switch_show_filesystem = switch_option()
             switch_show_filesystem.create(vbox_left, 'SHOW_FILE_SYSTEM', config['SHOW_FILE_SYSTEM'], "Show file system")
+
+        vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
 
         # Icon size slider
         box_icon_size = Gtk.VBox(0)
@@ -186,8 +186,7 @@ class MyWindow(Gtk.Window):
             switch_show_documents = switch_option()
             switch_show_documents.create(vbox_right, 'SHOW_RECENT_DOCUMENTS', config['SHOW_RECENT_DOCUMENTS'], "Show recent documents section")
         
-        vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
-        
+        # Buttons
         btn_close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
         btn_close.connect('clicked', self.exit_application)
         box_buttons.pack_end(btn_close, False, False, 0)
@@ -215,8 +214,7 @@ class MyWindow(Gtk.Window):
         save_config(default_config)
     
     def restart_shell(self, widget):
-        os.system('gnome-shell --replace &')
-        self.check_restart.set_active(False)
+        os.system("nohup gnome-shell --replace >/dev/null 2>&1&")
 
     def exit_application(self, widget):
         Gtk.main_quit()

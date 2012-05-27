@@ -290,8 +290,9 @@ class MyWindow(Gtk.Window):
         save_config(default_config)
     
     def restart_shell(self, widget):
-        os.system('cinnamon --replace &')
-        self.check_restart.set_active(False)
+        # Silent background process restart
+        os.system("nohup cinnamon --replace >/dev/null 2>&1&")
+        #self.check_restart.set_active(False)
 
     def exit_application(self, widget):
         if (self.restart):
