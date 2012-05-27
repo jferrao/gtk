@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-Settings application for the All-in-one Places applet for Cinnamon
+Settings application for the All-in-one Places extension for Gnome Shell.
 http://jferrao.github.com/gtk
 
 Requires Python 2.7

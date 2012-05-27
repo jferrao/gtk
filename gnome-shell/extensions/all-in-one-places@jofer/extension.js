@@ -1,9 +1,10 @@
 /**
- * All-in-one Places extension for Gnome Shell
- * Version: 1.2.1
+ * All-in-one Places extension for Gnome Shell.
+ * http://jferrao.github.com/gtk
  * 
- * @developer jferrao <jferrao@ymail.com>
- * @url http://jferrao.github.com/gtk
+ * 
+ * @author jferrao <jferrao@ymail.com>
+ * @version 1.3
  * 
  */
 
