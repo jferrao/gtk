@@ -15,26 +15,42 @@ Requires Python 2.7
 
 
 from optparse import OptionParser
-import os, os.path
+import os, sys, argparse
 import json
+import urllib2
+
+from gi.repository import Gio
 
 
 
 # Get extensions dir, i.e. parent directory relative to script current directory
-#extension_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.path.pardir))
 extension_dir = os.getenv("HOME") + "/.local/share/gnome-shell/extensions"
 metadata_file = "metadata.json"
 
+extensions_webservice = "https://extensions.gnome.org/extension-query?uuid=%s"
+
+EXTENSION_IFACE = 'org.gnome.Shell'
+EXTENSION_PATH  = '/org/gnome/Shell'
 
 
 
-def load_metadata_file(filename):
-    if os.path.isfile(filename):
-        f = open(filename, 'r')
-        metadata = json.loads(f.read())
-        f.close()
-        return metadata
-    return False
+class ExtensionTool:
+    def __init__(self):
+        try:
+            self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+            self.proxy = Gio.DBusProxy.new_sync( self.bus, Gio.DBusProxyFlags.NONE, None,
+                 EXTENSION_IFACE, EXTENSION_PATH, 'org.freedesktop.DBus.Properties', None)
+        except:
+            print "Exception: %s" % sys.exc_info()[1]
+            exit()
+ 
+    def get_shell_version(self):
+        output = self.proxy.Get('(ss)', EXTENSION_IFACE, 'ShellVersion')
+        return output
+ 
+    def get_extension_api_version(self):
+        output = self.proxy.Get('(ss)', EXTENSION_IFACE, 'ApiVersion')
+        return output
 
 
 
@@ -47,21 +63,51 @@ def get_local_extensions_info(directories):
     extensions = []
     for directory in directories:
         filename = "%s/%s/%s" % (extension_dir, directory, metadata_file)
-        extension_data = load_metadata_file(filename)
+        extension_data = get_local_extension_info(filename)
         if (extension_data):
-            extension = {}
-            extension['uuid'] = extension_data['uuid']
-            extension['shell-version'] = extension_data['shell-version']
-            extension['version'] = extension_data['version']
-            extensions.append(extension)
+            extensions.append(extension_data)
     return extensions
 
 
 
+def get_local_extension_info(filename):
+    if os.path.isfile(filename):
+        f = open(filename, 'r')
+        metadata = json.loads(f.read())
+        f.close()
+        extension = {}
+        extension['uuid'] = metadata['uuid']
+        extension['shell-version'] = metadata['shell-version']
+        extension['version'] = metadata['version']
+        return extension
+    return False
+
+
+
+def get_extension_info(uuid):
+    url = extensions_webservice % uuid
+    usock = urllib2.urlopen(url)
+    if usock.getcode() == 200:
+        return json.loads(usock.read())
+    usock.close()
+    return False
+
+
 def main():
-    directories = get_extensions_directories()
-    print get_local_extensions_info(directories)
     
+    # Test to get Gnome Shell Version
+    #gnome = ExtensionTool()
+    #gnome_shell_version = gnome.get_shell_version()    
+    #print gnome_shell_version
+    
+    directories = get_extensions_directories()
+    local_extensions = get_local_extensions_info(directories)
+    
+    info = get_extension_info(local_extensions[0]['uuid'])
+    if '3.4' in info.get('extensions')[0].get('shell_version_map'):
+        print "local:\t%s" % local_extensions[0]['version']
+        print "remote:\t%s" % info.get('extensions')[0].get('shell_version_map').get('3.4').get('version')
+
 
 
 if __name__ == "__main__":
