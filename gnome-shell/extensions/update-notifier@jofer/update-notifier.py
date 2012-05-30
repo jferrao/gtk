@@ -103,10 +103,12 @@ def main():
     directories = get_extensions_directories()
     local_extensions = get_local_extensions_info(directories)
     
-    info = get_extension_info(local_extensions[0]['uuid'])
-    if '3.4' in info.get('extensions')[0].get('shell_version_map'):
-        print "local:\t%s" % local_extensions[0]['version']
-        print "remote:\t%s" % info.get('extensions')[0].get('shell_version_map').get('3.4').get('version')
+    for local in local_extensions:
+        info = get_extension_info(local['uuid'])
+        if '3.2' in info.get('extensions')[0].get('shell_version_map'):
+            print info.get('extensions')[0].get('name')
+            print "local:\t%s" % local['version']
+            print "remote:\t%s" % info.get('extensions')[0].get('shell_version_map').get('3.2').get('version')
 
 
 
