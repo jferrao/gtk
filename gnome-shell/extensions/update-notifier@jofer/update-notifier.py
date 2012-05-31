@@ -27,7 +27,8 @@ from gi.repository import Gio
 extension_dir = os.getenv("HOME") + "/.local/share/gnome-shell/extensions"
 metadata_file = "metadata.json"
 
-extensions_webservice = "https://extensions.gnome.org/extension-query?uuid=%s"
+EXTENSIONS_SERVICE = "https://extensions.gnome.org/extension-query?uuid=%s"
+EXTENSIONS_BASEURL = "https://extensions.gnome.org%s"
 
 EXTENSION_IFACE = 'org.gnome.Shell'
 EXTENSION_PATH  = '/org/gnome/Shell'
@@ -85,7 +86,7 @@ def get_local_extension_info(filename):
 
 
 def get_extension_info(uuid):
-    url = extensions_webservice % uuid
+    url = EXTENSIONS_SERVICE % uuid
     usock = urllib2.urlopen(url)
     if usock.getcode() == 200:
         return json.loads(usock.read())
@@ -93,23 +94,37 @@ def get_extension_info(uuid):
     return False
 
 
+
+def transform_version(version):
+    # Retain only version.revision of the entire shell version string.
+    version = version.split(".")
+    return ".".join(version[0:2])
+
+
+
 def main():
+    result = []
     
     # Test to get Gnome Shell Version
     #gnome = ExtensionTool()
     #gnome_shell_version = gnome.get_shell_version()    
     #print gnome_shell_version
     
-    directories = get_extensions_directories()
-    local_extensions = get_local_extensions_info(directories)
-    
-    for local in local_extensions:
-        info = get_extension_info(local['uuid'])
-        if '3.2' in info.get('extensions')[0].get('shell_version_map'):
-            print info.get('extensions')[0].get('name')
-            print "local:\t%s" % local['version']
-            print "remote:\t%s" % info.get('extensions')[0].get('shell_version_map').get('3.2').get('version')
+    gnome_shell_version = transform_version("3.2.1")
+    local_extensions = get_local_extensions_info(get_extensions_directories())
 
+    for local_extension in local_extensions:
+        remote_extension = get_extension_info(local_extension['uuid'])
+
+        if (opts.verbose):
+            print "%s (local: %s | remote: %s)" % (remote_extension['extensions'][0]['name'], local_extension['version'], remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']),
+        
+        if gnome_shell_version in remote_extension['extensions'][0]['shell_version_map'] and (float(remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']) > float(local_extension['version'])):
+            result.append({'uuid': remote_extension['extensions'][0]['uuid'], 'name': remote_extension['extensions'][0]['name'], 'url': EXTENSIONS_BASEURL % remote_extension['extensions'][0]['link']})
+            if (opts.verbose):
+                print "Update"
+            
+    print result
 
 
 if __name__ == "__main__":
