@@ -35,22 +35,26 @@ EXTENSION_PATH  = '/org/gnome/Shell'
 
 
 
-class ExtensionTool:
+class Gnome:
     def __init__(self):
         try:
             self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-            self.proxy = Gio.DBusProxy.new_sync( self.bus, Gio.DBusProxyFlags.NONE, None,
-                 EXTENSION_IFACE, EXTENSION_PATH, 'org.freedesktop.DBus.Properties', None)
+            self.proxyp = Gio.DBusProxy.new_sync(self.bus, Gio.DBusProxyFlags.NONE, None, EXTENSION_IFACE, EXTENSION_PATH, 'org.freedesktop.DBus.Properties', None)
+            self.proxy = Gio.DBusProxy.new_sync(self.bus, Gio.DBusProxyFlags.NONE, None, EXTENSION_IFACE, EXTENSION_PATH, EXTENSION_IFACE, None)
         except:
             print "Exception: %s" % sys.exc_info()[1]
             exit()
  
     def get_shell_version(self):
-        output = self.proxy.Get('(ss)', EXTENSION_IFACE, 'ShellVersion')
+        output = self.proxyp.Get('(ss)', EXTENSION_IFACE, 'ShellVersion')
         return output
  
     def get_extension_api_version(self):
-        output = self.proxy.Get('(ss)', EXTENSION_IFACE, 'ApiVersion')
+        output = self.proxyp.Get('(ss)', EXTENSION_IFACE, 'ApiVersion')
+        return output
+
+    def get_extensions(self):
+        output = self.proxy.ListExtensions()
         return output
 
 
@@ -76,10 +80,11 @@ def get_local_extension_info(filename):
         f = open(filename, 'r')
         metadata = json.loads(f.read())
         f.close()
-        extension = {}
-        extension['uuid'] = metadata['uuid']
-        extension['shell-version'] = metadata['shell-version']
-        extension['version'] = metadata['version']
+        extension = {metadata['uuid']:{
+            'uuid': metadata['uuid'],
+            'shell-version': metadata['shell-version'],
+            'version': metadata['version']
+        }}
         return extension
     return False
 
@@ -103,27 +108,30 @@ def transform_version(version):
 
 
 def main():
-    result = []
+    result = {'total': 0, 'extensions': []}
     
     # Test to get Gnome Shell Version
-    #gnome = ExtensionTool()
-    #gnome_shell_version = gnome.get_shell_version()    
-    #print gnome_shell_version
+    gnome = Gnome()
+    gnome_shell_version = transform_version(gnome.get_shell_version())
+
+    local_extensions = gnome.get_extensions()
+    #local_extensions = get_local_extensions_info(get_extensions_directories())
     
-    gnome_shell_version = transform_version("3.2.1")
-    local_extensions = get_local_extensions_info(get_extensions_directories())
-
-    for local_extension in local_extensions:
-        remote_extension = get_extension_info(local_extension['uuid'])
-
-        if (opts.verbose):
-            print "%s (local: %s | remote: %s)" % (remote_extension['extensions'][0]['name'], local_extension['version'], remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']),
+    for uuid, local_extension in local_extensions.items():
+        # Only check for extensions located in the user directory
+        if local_extension['path'] == "%s/%s" % (extension_dir, local_extension['uuid']):
+            remote_extension = get_extension_info(local_extension['uuid'])
+            if remote_extension['extensions']:
+                if (opts.verbose):
+                    print "%s (local: %s | remote: %s)" % (local_extension['name'], local_extension['version'], remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']),
         
-        if gnome_shell_version in remote_extension['extensions'][0]['shell_version_map'] and (float(remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']) > float(local_extension['version'])):
-            result.append({'uuid': remote_extension['extensions'][0]['uuid'], 'name': remote_extension['extensions'][0]['name'], 'url': EXTENSIONS_BASEURL % remote_extension['extensions'][0]['link']})
-            if (opts.verbose):
-                print "Update"
-            
+                if gnome_shell_version in remote_extension['extensions'][0]['shell_version_map'] and (float(remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']) > float(local_extension['version'])):
+                    result['extensions'].append({'uuid': remote_extension['extensions'][0]['uuid'], 'name': remote_extension['extensions'][0]['name'], 'url': EXTENSIONS_BASEURL % remote_extension['extensions'][0]['link']})
+                    if (opts.verbose):
+                        print "Update"
+                else:
+                    print "Ok"
+
     print result
 
 
