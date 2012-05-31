@@ -126,11 +126,13 @@ def main():
                     print "%s (local: %s | remote: %s)" % (local_extension['name'], local_extension['version'], remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']),
         
                 if gnome_shell_version in remote_extension['extensions'][0]['shell_version_map'] and (float(remote_extension['extensions'][0]['shell_version_map'][gnome_shell_version]['version']) > float(local_extension['version'])):
+                    result['total'] += 1
                     result['extensions'].append({'uuid': remote_extension['extensions'][0]['uuid'], 'name': remote_extension['extensions'][0]['name'], 'url': EXTENSIONS_BASEURL % remote_extension['extensions'][0]['link']})
                     if (opts.verbose):
                         print "Update"
                 else:
-                    print "Ok"
+                    if (opts.verbose):
+                        print "Ok"
 
     print result
 
