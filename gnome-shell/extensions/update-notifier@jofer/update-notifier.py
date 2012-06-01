@@ -41,6 +41,7 @@ SERVICE_PATH = "/org/jofer/shell/extensions/updatenotifier"
 EXTENSION_IFACE = "org.gnome.Shell"
 EXTENSION_PATH  = "/org/gnome/Shell"
 
+loop = None
 __blacklist = []
 
 
@@ -50,9 +51,13 @@ class DBusService(dbus.service.Object):
         bus_name = dbus.service.BusName(SERVICE_IFACE, bus=dbus.SessionBus())
         dbus.service.Object.__init__(self, bus_name, SERVICE_PATH)
  
-    @dbus.service.method(SERVICE_IFACE)
+    @dbus.service.method(dbus_interface=SERVICE_IFACE, in_signature='', out_signature='s')
     def check_extensions(self):
-        return Notifier().get_extensions()
+        return json.dumps(Notifier().get_extensions(), sort_keys=False, indent=4)
+
+    @dbus.service.method(SERVICE_IFACE)
+    def shutdown(self):
+        loop.quit()
 
 
 
@@ -165,13 +170,15 @@ class Version():
 def main():
 
     if opts.dbus:
+        global loop
+        
         DBusGMainLoop(set_as_default=True)
         service = DBusService()
-        #gtk.main()
+
         loop = gobject.MainLoop()
-        loop.run()        
+        loop.run()
     else:
-        print Notifier().get_extensions()
+        print json.dumps(Notifier().get_extensions(), sort_keys=False, indent=4)
 
 
 
