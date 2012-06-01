@@ -19,9 +19,7 @@ import os, sys, argparse
 import json
 import urllib2
 
-from gi.repository import Gio
-
-import gtk
+import gobject
 import dbus
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
@@ -42,10 +40,9 @@ SERVICE_PATH = "/org/jofer/shell/extensions/updatenotifier"
 
 EXTENSION_IFACE = "org.gnome.Shell"
 EXTENSION_PATH  = "/org/gnome/Shell"
-#EXTENSION_IFACE = "org.Cinnamon"
-#EXTENSION_PATH  = "/org/Cinnamon"
 
-blacklist = []
+__blacklist = []
+
 
 
 class DBusService(dbus.service.Object):
@@ -61,21 +58,17 @@ class DBusService(dbus.service.Object):
 
 class Gnome:
     def __init__(self):
-        try:
-            self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-            self.proxyp = Gio.DBusProxy.new_sync(self.bus, Gio.DBusProxyFlags.NONE, None, EXTENSION_IFACE, EXTENSION_PATH, 'org.freedesktop.DBus.Properties', None)
-            self.proxy = Gio.DBusProxy.new_sync(self.bus, Gio.DBusProxyFlags.NONE, None, EXTENSION_IFACE, EXTENSION_PATH, EXTENSION_IFACE, None)
-        except:
-            print "Exception: %s" % sys.exc_info()[1]
-            exit()
+        bus = dbus.SessionBus()
+        service = bus.get_object(EXTENSION_IFACE, EXTENSION_PATH)
+        self.proxy = dbus.Interface(service, EXTENSION_IFACE)
+        self.proxyp = dbus.Interface(service, 'org.freedesktop.DBus.Properties')
  
     def get_shell_version(self):
-        output = self.proxyp.Get('(ss)', EXTENSION_IFACE, 'ShellVersion')
-        #output = self.proxyp.Get('(ss)', EXTENSION_IFACE, 'CinnamonVersion')
+        output = self.proxyp.Get(EXTENSION_IFACE, 'ShellVersion')
         return output
  
     def get_extension_api_version(self):
-        output = self.proxyp.Get('(ss)', EXTENSION_IFACE, 'ApiVersion')
+        output = self.proxyp.Get(EXTENSION_IFACE, 'ApiVersion')
         return output
 
     def get_extensions(self):
@@ -100,7 +93,7 @@ class Notifier:
         
         for uuid, local_extension in local_extensions.items():
             # Only check for extensions located in the user directory
-            if local_extension['path'] == "%s/%s" % (EXTENSIONS_PATH, local_extension['uuid']) and local_extension['uuid'] not in blacklist:
+            if local_extension['path'] == "%s/%s" % (EXTENSIONS_PATH, local_extension['uuid']) and local_extension['uuid'] not in __blacklist:
                 remote_extension = self.get_extension_info(local_extension['uuid'])
                 if remote_extension['extensions']:
                     if (opts.verbose):
@@ -151,10 +144,10 @@ class Notifier:
         return False
 
     def load_blacklist(self):
-        global blacklist
+        global __blacklist
         if os.path.isfile(BLACKLIST_FILE):
             f = open(BLACKLIST_FILE, 'r')
-            blacklist = json.loads(f.read())
+            __blacklist = json.loads(f.read())
             f.close()
 
 
@@ -174,7 +167,9 @@ def main():
     if opts.dbus:
         DBusGMainLoop(set_as_default=True)
         service = DBusService()
-        gtk.main()
+        #gtk.main()
+        loop = gobject.MainLoop()
+        loop.run()        
     else:
         print Notifier().get_extensions()
 
