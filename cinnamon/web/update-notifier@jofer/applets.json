@@ -1,0 +1,454 @@
+{
+    "UserMenuV2@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/45", 
+        "uuid": "UserMenuV2@bownz", 
+        "name": "UserMenu", 
+        "description": "A menu for your Account."
+    }, 
+    "screen-inhibit@mtwebster": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/59", 
+        "uuid": "screen-inhibit@mtwebster", 
+        "name": "Screensaver Inhibitor", 
+        "description": "Click to inhibit the screensaver, click again to remove inhibition"
+    }, 
+    "GnomeApplications@bownz": {
+        "uuid": "GnomeApplications@bownz", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/51", 
+        "description": "Miss Gnome? Use this Gnome-like Applications Menu.", 
+        "name": "Gnome-like Applications Menu"
+    }, 
+    "system-monitor@spacy01": {
+        "creator_url": "http://spacy01.deviantart.com/", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/6", 
+        "uuid": "system-monitor@spacy01", 
+        "name": "System monitor", 
+        "description": "Click here to see processes and etc."
+    }, 
+    "timer-notifications@markbokil.com": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/68", 
+        "uuid": "timer-notifications@markbokil.com", 
+        "name": "Timer with Notifications", 
+        "description": "A timer app with visual and auditory notifications."
+    }, 
+    "MessagingMenu@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/24", 
+        "description": "Messaging Menu applet", 
+        "name": "Messaging Menu", 
+        "uuid": "MessagingMenu@bownz"
+    }, 
+    "extensions@dalcde": {
+        "uuid": "extensions@dalcde", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/71", 
+        "description": "Allows enabling and disabling of extensions with one click", 
+        "name": "Extensions Manager"
+    }, 
+    "timer@dalcde": {
+        "uuid": "timer@dalcde", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/29", 
+        "description": "Timer applet for Cinnamon", 
+        "name": "Timer"
+    }, 
+    "force-quit@cinnamon.org": {
+        "creator_url": "http://cinnamon.linuxmint.com", 
+        "uuid": "force-quit@cinnamon.org", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/4", 
+        "description": "Click on the applet to launch xkill and force any window to quit immediately", 
+        "name": "Force Quit"
+    }, 
+    "separator@dalcde": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/20", 
+        "description": "Creates a separator between applets", 
+        "name": "Separator", 
+        "uuid": "separator@dalcde"
+    }, 
+    "gpaste@dmo60.de": {
+        "creator_url": "http://github.com/dmo60/Cinnamon-GPasteApplet", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/27", 
+        "description": "Shows your clipboard", 
+        "name": "GPaste", 
+        "uuid": "gpaste@dmo60.de"
+    }, 
+    "WindowListGroup@jake.phy@gmail.com": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/16", 
+        "uuid": "WindowListGroup@jake.phy@gmail.com", 
+        "name": "Window List With App Grouping", 
+        "description": "Window List with App Grouping an Window Thumbnails"
+    }, 
+    "ScreenShot@tech71": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/35", 
+        "description": "Take a snapshot of your desktop or individual windows", 
+        "name": "ScreenShot", 
+        "uuid": "ScreenShot@tech71"
+    }, 
+    "places-bookmarks@dmo60.de": {
+        "creator_url": "http://github.com/dmo60/Cinnamon-PlacesApplet", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/5", 
+        "uuid": "places-bookmarks@dmo60.de", 
+        "name": "Places", 
+        "description": "Access your places and bookmarks"
+    }, 
+    "all-in-one-places@jofer": {
+        "creator_url": "http://jferrao.github.com/gtk", 
+        "uuid": "all-in-one-places@jofer", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/62", 
+        "description": "All-in-one quick navigation to places and devices with a few extra configuration options to change the look and feel of the applet.", 
+        "name": "All-in-one Places"
+    }, 
+    "trash@cinnamon.org": {
+        "creator_url": "http://cinnamon.linuxmint.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/2", 
+        "description": "Control the trash from the panel", 
+        "name": "Trash", 
+        "uuid": "trash@cinnamon.org"
+    }, 
+    "mylauncher@markbokil.com": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/60", 
+        "description": "Personal app launcher.", 
+        "name": "My Launcher", 
+        "uuid": "mylauncher@markbokil.com"
+    }, 
+    "gmailnotifier@denisigo": {
+        "description": "Applet, which notifies you about new emails in your Gmail mailbox", 
+        "version": "0.1", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/73", 
+        "uuid": "gmailnotifier@denisigo", 
+        "name": "Gmail Notifier"
+    }, 
+    "calendar@markbokil.com": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/69", 
+        "uuid": "calendar@markbokil.com", 
+        "name": "Calendar Enhanced", 
+        "description": "Fork of the Cinnamon calendar applet with tooltip and right-click menu"
+    }, 
+    "search@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/56", 
+        "uuid": "search@bownz", 
+        "name": "Search Applet", 
+        "description": "Click on the applet to launch gnome-search-tool and search for files immediately"
+    }, 
+    "panel-separator-icon@mordant23": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/23", 
+        "description": "Places a separator in the panel to help organize the panel", 
+        "name": "Panel Separator (Icon)", 
+        "uuid": "panel-separator-icon@mordant23"
+    }, 
+    "AutostartPrograms@spacy01": {
+        "creator_url": "http://spacy01.deviantart.com/", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/9", 
+        "description": "Click here to add or remove programs to start with the session.", 
+        "name": "Autostart programs", 
+        "uuid": "AutostartPrograms@spacy01"
+    }, 
+    "bettersettings@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/36", 
+        "description": "A Better Cinnamon Settings", 
+        "name": "Better Cinnamon Settings", 
+        "uuid": "bettersettings@bownz"
+    }, 
+    "lockscreen@bimsebasse": {
+        "uuid": "lockscreen@bimsebasse", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/53", 
+        "description": "Single click on panel icon to lock screen", 
+        "name": "Lock screen"
+    }, 
+    "web-developer-menu@infiniteshroom": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/63", 
+        "description": "A Menu for PHP/MySQL Web Developers", 
+        "name": "Web Developer Menu", 
+        "uuid": "web-developer-menu@infiniteshroom"
+    }, 
+    "hwmonitor@sylfurd": {
+        "creator_url": "http://sylfurd.free.fr", 
+        "description": "Displaying realtime CPU and memory load", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/12", 
+        "uuid": "hwmonitor@sylfurd", 
+        "name": "Graphical hardware monitor"
+    }, 
+    "softyubikey@yubiserver.include.gr": {
+        "creator_url": "http://yubiserver.include.gr", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/26", 
+        "description": "Click on the applet to create a OTP", 
+        "name": "SoftYubikey", 
+        "uuid": "softyubikey@yubiserver.include.gr"
+    }, 
+    "search-box@mtwebster": {
+        "description": "Perform an Internet search, using your favorite engine", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/57", 
+        "uuid": "search-box@mtwebster", 
+        "name": "Internet Search Box"
+    }, 
+    "windowPreviewWindowList@dalcde": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/38", 
+        "description": "Main Cinnamon window list with window preview", 
+        "name": "Window list with window preview", 
+        "uuid": "windowPreviewWindowList@dalcde"
+    }, 
+    "restart-cinnamon@kolle": {
+        "creator_url": "http://www.facebook.com/kolja.strauss", 
+        "description": "Click on the applet to restart Cinnamon", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/14", 
+        "uuid": "restart-cinnamon@kolle", 
+        "name": "Restart Cinnamon"
+    }, 
+    "power-off@martin": {
+        "creator_url": "http://cinnamon-spices.linuxmint.com/", 
+        "uuid": "power-off@martin", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/11", 
+        "description": "2-clicks power-off", 
+        "name": "power-off"
+    }, 
+    "vnstat@linuxmint.com": {
+        "creator_url": "http://cinnamon.linuxmint.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/31", 
+        "uuid": "vnstat@linuxmint.com", 
+        "name": "Network usage monitor", 
+        "description": "Network usage monitor using vnstat"
+    }, 
+    "temperature@xtranophilist": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/72", 
+        "description": "Display Temperature of acpi on cinnamon", 
+        "name": "CPU Temperature", 
+        "uuid": "temperature@xtranophilist"
+    }, 
+    "separator2@zyzz": {
+        "creator_url": "http://cinnamon.linuxmint.com/", 
+        "description": "Use this applet to create a separator between your applets", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/21", 
+        "uuid": "separator2@zyzz", 
+        "name": "Separator2"
+    }, 
+    "SimplerMenu@bownz": {
+        "description": "A Simpler Main Cinnamon menu", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/40", 
+        "uuid": "SimplerMenu@bownz", 
+        "name": "Simpler Menu"
+    }, 
+    "a11y@cinnamon.org": {
+        "creator_url": "http://cinnamon.linuxmint.com", 
+        "uuid": "a11y@cinnamon.org", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/1", 
+        "description": "Accessibility applet", 
+        "name": "Accessibility"
+    }, 
+    "spaces@zyzz": {
+        "creator_url": "http://cinnamon.linuxmint.com/", 
+        "description": "Use this applet to create spaces between your applets", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/19", 
+        "uuid": "spaces@zyzz", 
+        "name": "Spaces"
+    }, 
+    "Favorites@bownz": {
+        "uuid": "Favorites@bownz", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/65", 
+        "description": "An Applet devoted to your favorite applets", 
+        "name": "Favorites Applet"
+    }, 
+    "lock@dalcde": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/37", 
+        "uuid": "lock@dalcde", 
+        "name": "Num Lock/Caps Lock indicator", 
+        "description": "Shows whether caps lock/num lock is on"
+    }, 
+    "ShutdownApplet@shelley": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/49", 
+        "uuid": "ShutdownApplet@shelley", 
+        "name": "Shutdown Applet", 
+        "description": "An applet to help you shutdown, restart and suspend your system with single click"
+    }, 
+    "cinnamon-utils-menu@pithdillinja": {
+        "description": "Provides a drop-down menu with a few utilities to manage Cinnamon. Based on the original 'Restart Cinnamon' applet by kolle", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/30", 
+        "uuid": "cinnamon-utils-menu@pithdillinja", 
+        "name": "Cinnamon Utilities Menu"
+    }, 
+    "brightness@markbokil.com": {
+        "description": "An app to control xgamma brightness", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/64", 
+        "uuid": "brightness@markbokil.com", 
+        "name": "Brightness"
+    }, 
+    "cpu-monitor-text@gnemonix": {
+        "creator_url": "http://gnemo.users.sourceforge.net/", 
+        "uuid": "cpu-monitor-text@gnemonix", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/8", 
+        "description": "A simple applet that displays the cpu usage.", 
+        "name": "Simple CPU Monitor"
+    }, 
+    "netspeed@adec": {
+        "creator_url": "http://github.com/andreadec/cinnamon-applet-netspeed/", 
+        "uuid": "netspeed@adec", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/18", 
+        "description": "A simple network speed monitor for the panel.", 
+        "name": "Network speed monitor"
+    }, 
+    "cpufreq@mtwebster": {
+        "uuid": "cpufreq@mtwebster", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/70", 
+        "description": "Display and control cpu frequency", 
+        "name": "CPU Frequency Applet"
+    }, 
+    "touchpad@dalcde": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/44", 
+        "uuid": "touchpad@dalcde", 
+        "name": "Touchpad indicator", 
+        "description": "Touchpad management applet"
+    }, 
+    "vboxlauncher@adec": {
+        "creator_url": "http://github.com/andreadec/cinnamon-applet-vbox-launcher", 
+        "description": "An applet to launch virtual machines.", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/25", 
+        "uuid": "vboxlauncher@adec", 
+        "name": "Vbox Launcher"
+    }, 
+    "logout@martin": {
+        "creator_url": "http://cinnamon.linuxmint.com/", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/10", 
+        "uuid": "logout@martin", 
+        "name": "logout", 
+        "description": "2-clicks logout"
+    }, 
+    "record@dalcde": {
+        "description": "Applet for launching recordyourdesktop", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/28", 
+        "uuid": "record@dalcde", 
+        "name": "Record Your Desktop"
+    }, 
+    "restart-cinnamon@bimsebasse": {
+        "uuid": "restart-cinnamon@bimsebasse", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/48", 
+        "description": "Click on the applet's panel icon to restart Cinnamon", 
+        "name": "Restart Cinnamon"
+    }, 
+    "rprego@rprego.com": {
+        "uuid": "rprego@rprego.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/43", 
+        "description": "Switch display configuration on-the-fly", 
+        "name": "Display Switcher"
+    }, 
+    "ScreenShot+RecordDesktop@tech71": {
+        "description": "Take A Snapshot Or Record Your Desktop", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/41", 
+        "uuid": "ScreenShot+RecordDesktop@tech71", 
+        "name": "ScreenShot+Record Desktop"
+    }, 
+    "QuitApplet@bownz": {
+        "description": "An applet to help you quit your current session", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/39", 
+        "uuid": "QuitApplet@bownz", 
+        "name": "Quit Applet"
+    }, 
+    "lookingglass-restart@markbokil.com": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/66", 
+        "uuid": "lookingglass-restart@markbokil.com", 
+        "name": "LookingGlass Restart", 
+        "description": "Looking Glass debugger with Cinnamon restart."
+    }, 
+    "ScreenLocker@spacy01": {
+        "creator_url": "http://spacy01.deviantart.com/", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/7", 
+        "uuid": "ScreenLocker@spacy01", 
+        "name": "Screen locker", 
+        "description": "Click to lock the screen immediately"
+    }, 
+    "SimplestMenu@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/42", 
+        "description": "A Simpler Main Cinnamon menu without favoritesx", 
+        "name": "Simplest Menu", 
+        "uuid": "SimplestMenu@bownz"
+    }, 
+    "sysmenu@tuxuls@gmail.com": {
+        "uuid": "sysmenu@tuxuls@gmail.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/33", 
+        "description": "Add system menu", 
+        "name": "System menu"
+    }, 
+    "sound@mikerofone": {
+        "description": "Fork of the 'Cinnamon sound applet' which provides more information while requiring less interaction", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/50", 
+        "uuid": "sound@mikerofone", 
+        "name": "informative Sound"
+    }, 
+    "places-with-terminal@mtwebster": {
+        "description": "Access your places and bookmarks, or launch a terminal at that location", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/52", 
+        "uuid": "places-with-terminal@mtwebster", 
+        "name": "Places with Terminal Launcher"
+    }, 
+    "mybookmarks@markbokil.com": {
+        "uuid": "mybookmarks@markbokil.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/61", 
+        "description": "Web apps launcher", 
+        "name": "My Bookmarks"
+    }, 
+    "betterplaces@bownz": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/54", 
+        "description": "Access your places and bookmarks in a BETTER Style", 
+        "name": "Better Places", 
+        "uuid": "betterplaces@bownz"
+    }, 
+    "gtkMenu@karlitos.net": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/32", 
+        "description": "Click on the applet to show a custom personally defined gtk menu", 
+        "name": "Custom gtk menu", 
+        "uuid": "gtkMenu@karlitos.net"
+    }, 
+    "classicMenu@dalcde": {
+        "description": "Main Menu that resembles mintMenu", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/46", 
+        "uuid": "classicMenu@dalcde", 
+        "name": "Classic Menu"
+    }, 
+    "groove-key@rmarques": {
+        "description": "Click on the applet to capture keyboard media keys to control grooveshark", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/74", 
+        "uuid": "groove-key@rmarques", 
+        "name": "GrooveKey"
+    }, 
+    "weather@mockturtl": {
+        "version": "1.5.1", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/17", 
+        "description": "View your local weather forecast", 
+        "name": "Weather", 
+        "uuid": "weather@mockturtl"
+    }, 
+    "windowButtons@lippy": {
+        "uuid": "windowButtons@lippy", 
+        "version": "1.0", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/67", 
+        "description": "Adds window buttons to the panel", 
+        "name": "Cinnamon Window Buttons"
+    }, 
+    "recent@cinnamon.org": {
+        "creator_url": "http://cinnamon.linuxmint.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/3", 
+        "description": "Access the documents you recently opened", 
+        "name": "Recent documents", 
+        "uuid": "recent@cinnamon.org"
+    }, 
+    "toggle_LookingGlass@kolle": {
+        "creator_url": "http://www.facebook.com/kolja.strauss", 
+        "uuid": "toggle_LookingGlass@kolle", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/15", 
+        "description": "Click on the applet to toggle LookingGlass", 
+        "name": "Toggle LookingGlass"
+    }, 
+    "panel-separator-theme@mordant23": {
+        "description": "Places a separator in the panel to help organize the panel", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/22", 
+        "uuid": "panel-separator-theme@mordant23", 
+        "name": "Panel Separator (Theme)"
+    }, 
+    "ding@martin": {
+        "creator_url": "http://cinnamon-spices.linuxmint.com", 
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/13", 
+        "uuid": "ding@martin", 
+        "name": "ding", 
+        "description": "Ding: Dictionary German-English"
+    }, 
+    "mem-monitor-text@datanom.net": {
+        "link": "http://cinnamon-spices.linuxmint.com/applets/view/34", 
+        "uuid": "mem-monitor-text@datanom.net", 
+        "name": "Simple Memory Monitor", 
+        "description": "A simple applet that displays the memory usage."
+    }
+}
