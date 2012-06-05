@@ -144,19 +144,47 @@ class MyWindow(Gtk.Window):
             
         vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
 
+        # Icon size slider
+        box_icon_size = Gtk.VBox(0)
+       
+        adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
+        adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
+        slider_icon_size = Gtk.HScale()
+        slider_icon_size.set_adjustment(adjust_icon_size)
+        slider_icon_size.set_digits(0)
+
+        box_icon_size.pack_start(Gtk.Label(_("Icon size")), False, False, 0)
+        box_icon_size.pack_start(slider_icon_size, False, False, 0)        
+
+        vbox_left.pack_start(box_icon_size, False, False, 0)
+
+        # Number of recent documents slider
+        box_documents = Gtk.VBox(0)
+        
+        adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
+        adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
+        slider_documents = Gtk.HScale()
+        slider_documents.set_adjustment(adjust_documents)
+        slider_documents.set_digits(0)
+
+        box_documents.pack_start(Gtk.Label(_("Number of recent documents")), False, False, 0)
+        box_documents.pack_start(slider_documents, False, False, 0)               
+        
+        vbox_left.pack_start(box_documents, False, False, 0)
+
+        # Build options for right column
         if (config.has_key('SHOW_DESKTOP')):
             switch_show_desktop = switch_option()
-            switch_show_desktop.create(vbox_left, 'SHOW_DESKTOP', config['SHOW_DESKTOP'], "Show desktop")
+            switch_show_desktop.create(vbox_right, 'SHOW_DESKTOP', config['SHOW_DESKTOP'], "Show desktop")
 
         if (config.has_key('AUTO_HIDE_TRASH')):
             switch_hide_trash = switch_option()
-            switch_hide_trash.create(vbox_left, 'AUTO_HIDE_TRASH', config['AUTO_HIDE_TRASH'], "Auto hide trash")
+            switch_hide_trash.create(vbox_right, 'AUTO_HIDE_TRASH', config['AUTO_HIDE_TRASH'], "Auto hide trash")
 
         if (config.has_key('SHOW_FILE_SYSTEM')):
             switch_show_filesystem = switch_option()
-            switch_show_filesystem.create(vbox_left, 'SHOW_FILE_SYSTEM', config['SHOW_FILE_SYSTEM'], "Show file system")
+            switch_show_filesystem.create(vbox_right, 'SHOW_FILE_SYSTEM', config['SHOW_FILE_SYSTEM'], "Show file system")
 
-        # Build options for right column
         if (config.has_key('SHOW_BOOKMARKS')):
             switch_show_bookmarks = switch_option()
             switch_show_bookmarks.create(vbox_right, 'SHOW_BOOKMARKS', config['SHOW_BOOKMARKS'], "Show bookmarks section")
@@ -188,36 +216,6 @@ class MyWindow(Gtk.Window):
         if (config.has_key('SHOW_RECENT_DOCUMENTS')):
             switch_show_documents = switch_option()
             switch_show_documents.create(vbox_right, 'SHOW_RECENT_DOCUMENTS', config['SHOW_RECENT_DOCUMENTS'], "Show recent documents section")
-        
-        vbox_right.pack_start(Gtk.HSeparator(), False, False, 0)
-        
-        # Icon size slider
-        box_icon_size = Gtk.VBox(0)
-       
-        adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
-        adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
-        slider_icon_size = Gtk.HScale()
-        slider_icon_size.set_adjustment(adjust_icon_size)
-        slider_icon_size.set_digits(0)
-
-        box_icon_size.pack_start(Gtk.Label(_("Icon size")), False, False, 0)
-        box_icon_size.pack_start(slider_icon_size, False, False, 0)        
-
-        vbox_right.pack_start(box_icon_size, False, False, 0)
-
-        # Number of recent documents slider
-        box_documents = Gtk.VBox(0)
-        
-        adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
-        adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
-        slider_documents = Gtk.HScale()
-        slider_documents.set_adjustment(adjust_documents)
-        slider_documents.set_digits(0)
-
-        box_documents.pack_start(Gtk.Label(_("Number of recent documents")), False, False, 0)
-        box_documents.pack_start(slider_documents, False, False, 0)               
-        
-        vbox_right.pack_start(box_documents, False, False, 0)
         
         # Build buttons        
         
