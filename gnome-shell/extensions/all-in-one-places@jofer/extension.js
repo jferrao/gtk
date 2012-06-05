@@ -41,20 +41,23 @@ config = null;
  * Default configuration options in case something goes wrong with the config.json file.
  */
 defaultConfig = {
-    "LEFT_PANEL_MENU": false,
-    "SHOW_DESKTOP": true,
-    "AUTO_HIDE_TRASH": false,
-    "SHOW_BOOKMARKS": true,
-    "COLLAPSE_BOOKMARKS": false,
-    "SHOW_FILE_SYSTEM": false,
-    "SHOW_DEVICES": true,
-    "COLLAPSE_DEVICES": false,
-    "SHOW_NETWORK": true,
-    "COLLAPSE_NETWORK": false,
-    "SHOW_SEARCH": true,
-    "SHOW_RECENT_DOCUMENTS": true,
-    "ICON_SIZE": 22,
-    "RECENT_ITEMS": 10
+    "LEFT_PANEL_MENU": false, 
+    "SHOW_PANEL_ICON": true, 
+    "SHOW_PANEL_TEXT": false, 
+    "PANEL_TEXT": null, 
+    "SHOW_DESKTOP": true, 
+    "AUTO_HIDE_TRASH": false, 
+    "SHOW_BOOKMARKS": true, 
+    "COLLAPSE_BOOKMARKS": false, 
+    "SHOW_FILE_SYSTEM": false, 
+    "SHOW_DEVICES": true, 
+    "COLLAPSE_DEVICES": false, 
+    "SHOW_NETWORK": true, 
+    "COLLAPSE_NETWORK": false, 
+    "SHOW_SEARCH": true, 
+    "SHOW_RECENT_DOCUMENTS": true, 
+    "ICON_SIZE": 22, 
+    "RECENT_ITEMS": 10    
 };
 
 /**
@@ -311,18 +314,24 @@ AllInOnePlaces.prototype =
         PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
         
         this._getConfig();
-/*
-        this.actor.get_children().forEach(function(c) {
-            c.destroy()
-        });
-*/
+
+        if (!config.SHOW_PANEL_ICON && !config.SHOW_PANEL_TEXT) {
+            config.SHOW_PANEL_ICON = true;
+        }
+
         if (config.SHOW_PANEL_TEXT) {
+            // Clean up all status button children
+            this.actor.get_children().forEach(function(c) {
+                c.destroy()
+            });
+
             this.box = new St.BoxLayout();
-            if (config.SHOW_PANEL_TEXT) {
+            if (config.SHOW_PANEL_ICON) {
                 this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
                 this.box.add(this.icon);
             }
-            this.label = new St.Label({ text: "  " + _("Places"), style_class: 'places-label' });
+            let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
+            this.label = new St.Label({ text: "  " + text, style_class: 'places-label' });
             this.box.add(this.label);
         
             this.actor.add_actor(this.box);

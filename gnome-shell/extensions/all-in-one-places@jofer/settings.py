@@ -27,20 +27,23 @@ from gettext import gettext as _
 
 
 default_config = {
-    'LEFT_PANEL_MENU': False,
-    'SHOW_DESKTOP': True, 
-    'AUTO_HIDE_TRASH': False, 
-    'SHOW_BOOKMARKS': True, 
-    'COLLAPSE_BOOKMARKS': False, 
-    'SHOW_FILE_SYSTEM': False, 
-    'SHOW_DEVICES': True, 
-    'COLLAPSE_DEVICES': False, 
-    'SHOW_NETWORK': True, 
-    'COLLAPSE_NETWORK': False, 
-    'SHOW_SEARCH': True, 
-    'SHOW_RECENT_DOCUMENTS': True, 
-    'ICON_SIZE': 22, 
-    'RECENT_ITEMS': 10
+    "LEFT_PANEL_MENU": False, 
+    "SHOW_PANEL_ICON": True, 
+    "SHOW_PANEL_TEXT": False, 
+    "PANEL_TEXT": None, 
+    "SHOW_DESKTOP": True, 
+    "AUTO_HIDE_TRASH": False, 
+    "SHOW_BOOKMARKS": True, 
+    "COLLAPSE_BOOKMARKS": False, 
+    "SHOW_FILE_SYSTEM": False, 
+    "SHOW_DEVICES": True, 
+    "COLLAPSE_DEVICES": False, 
+    "SHOW_NETWORK": True, 
+    "COLLAPSE_NETWORK": False, 
+    "SHOW_SEARCH": True, 
+    "SHOW_RECENT_DOCUMENTS": True, 
+    "ICON_SIZE": 22, 
+    "RECENT_ITEMS": 10    
 }
 
 config = None
@@ -111,6 +114,36 @@ class MyWindow(Gtk.Window):
             switch_show_icon = switch_option()
             switch_show_icon.create(vbox_left, 'LEFT_PANEL_MENU', config['LEFT_PANEL_MENU'], "Left panel menu")
 
+        if (config.has_key('SHOW_PANEL_ICON')):
+            switch_show_icon = switch_option()
+            switch_show_icon.create(vbox_left, 'SHOW_PANEL_ICON', config['SHOW_PANEL_ICON'], "Show panel icon")
+
+        if (config.has_key('SHOW_PANEL_TEXT')):
+            switch_show_text = switch_option()
+            switch_show_text.create(vbox_left, 'SHOW_PANEL_TEXT', config['SHOW_PANEL_TEXT'], "Show panel text")
+
+        if (config.has_key('PANEL_TEXT')):
+            use_custom_panel_text = False if (config['PANEL_TEXT'] == None) else True
+            # Custom text option
+            check_custom_text = Gtk.CheckButton("Use custom panel text")
+            check_custom_text.set_active(use_custom_panel_text)
+            vbox_left.pack_start(check_custom_text, False, False, 0)        
+            
+            # Custom text entry
+            entry_panel_text = Gtk.Entry()
+            if (use_custom_panel_text):
+                if (config['PANEL_TEXT'] != None):
+                    entry_panel_text.set_text(config['PANEL_TEXT'])
+            else:
+                entry_panel_text.set_sensitive(False)
+            vbox_left.pack_start(entry_panel_text, False, False, 0) 
+            
+            # Connect events
+            check_custom_text.connect('toggled', self.on_check_custom_text_change, entry_panel_text)
+            entry_panel_text.connect('changed', self.on_custom_text_change)
+            
+        vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
+
         if (config.has_key('SHOW_DESKTOP')):
             switch_show_desktop = switch_option()
             switch_show_desktop.create(vbox_left, 'SHOW_DESKTOP', config['SHOW_DESKTOP'], "Show desktop")
@@ -122,34 +155,6 @@ class MyWindow(Gtk.Window):
         if (config.has_key('SHOW_FILE_SYSTEM')):
             switch_show_filesystem = switch_option()
             switch_show_filesystem.create(vbox_left, 'SHOW_FILE_SYSTEM', config['SHOW_FILE_SYSTEM'], "Show file system")
-
-        # Icon size slider
-        box_icon_size = Gtk.VBox(0)
-       
-        adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
-        adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
-        slider_icon_size = Gtk.HScale()
-        slider_icon_size.set_adjustment(adjust_icon_size)
-        slider_icon_size.set_digits(0)
-
-        box_icon_size.pack_start(Gtk.Label(_("Icon size")), False, False, 0)
-        box_icon_size.pack_start(slider_icon_size, False, False, 0)        
-
-        vbox_left.pack_start(box_icon_size, False, False, 0)
-
-        # Number of recent documents slider
-        box_documents = Gtk.VBox(0)
-        
-        adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
-        adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
-        slider_documents = Gtk.HScale()
-        slider_documents.set_adjustment(adjust_documents)
-        slider_documents.set_digits(0)
-
-        box_documents.pack_start(Gtk.Label(_("Number of recent documents")), False, False, 0)
-        box_documents.pack_start(slider_documents, False, False, 0)        
-
-        vbox_left.pack_start(box_documents, False, False, 0)
 
         # Build options for right column
         if (config.has_key('SHOW_BOOKMARKS')):
@@ -184,7 +189,37 @@ class MyWindow(Gtk.Window):
             switch_show_documents = switch_option()
             switch_show_documents.create(vbox_right, 'SHOW_RECENT_DOCUMENTS', config['SHOW_RECENT_DOCUMENTS'], "Show recent documents section")
         
-        vbox_left.pack_start(Gtk.HSeparator(), False, False, 0)
+        vbox_right.pack_start(Gtk.HSeparator(), False, False, 0)
+        
+        # Icon size slider
+        box_icon_size = Gtk.VBox(0)
+       
+        adjust_icon_size = Gtk.Adjustment(config['ICON_SIZE'], 16, 46, 6, 6, 0)
+        adjust_icon_size.connect("value_changed", self.on_slider_change, 'ICON_SIZE')
+        slider_icon_size = Gtk.HScale()
+        slider_icon_size.set_adjustment(adjust_icon_size)
+        slider_icon_size.set_digits(0)
+
+        box_icon_size.pack_start(Gtk.Label(_("Icon size")), False, False, 0)
+        box_icon_size.pack_start(slider_icon_size, False, False, 0)        
+
+        vbox_right.pack_start(box_icon_size, False, False, 0)
+
+        # Number of recent documents slider
+        box_documents = Gtk.VBox(0)
+        
+        adjust_documents = Gtk.Adjustment(config['RECENT_ITEMS'], 5, 25, 1, 5, 0)
+        adjust_documents.connect("value_changed", self.on_slider_change, 'RECENT_ITEMS')
+        slider_documents = Gtk.HScale()
+        slider_documents.set_adjustment(adjust_documents)
+        slider_documents.set_digits(0)
+
+        box_documents.pack_start(Gtk.Label(_("Number of recent documents")), False, False, 0)
+        box_documents.pack_start(slider_documents, False, False, 0)               
+        
+        vbox_right.pack_start(box_documents, False, False, 0)
+        
+        # Build buttons        
         
         btn_close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
         btn_close.connect('clicked', self.exit_application)
@@ -200,6 +235,23 @@ class MyWindow(Gtk.Window):
         self.add(box_container)
 
 
+
+    def on_check_custom_text_change(self, option_widget, text_widget):
+        if option_widget.get_active():
+            text_widget.set_sensitive(True)
+            text_widget.grab_focus()
+        else:
+            text_widget.set_sensitive(False)
+            config['PANEL_TEXT'] = None
+            if (opts.verbose):
+                print "changed key 'PANEL_TEXT' => %s" % None
+            save_config(config)
+
+    def on_custom_text_change(self, text_widget):
+        config['PANEL_TEXT'] = text_widget.get_text()
+        if (opts.verbose):
+            print "changed key 'PANEL_TEXT' => %s" % text_widget.get_text()
+        save_config(config)
 
     def on_slider_change(self, widget, key):
         config[key] = int(widget.get_value())
