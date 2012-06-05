@@ -1,10 +1,10 @@
 /**
- * All-in-one Places applet for Cinnamon
+ * All-in-one Places applet for Cinnamon.
  * http://jferrao.github.com/gtk
  * 
  * 
  * @author jferrao <jferrao@ymail.com>
- * @version 1.3
+ * @version 1.3.1
  * 
  */
 
@@ -343,7 +343,11 @@ MyApplet.prototype =
             
             if (config.SHOW_PANEL_TEXT) {
                 let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
-                this.set_applet_label(" " + text);
+                if (config.SHOW_PANEL_ICON) {
+                    this.set_applet_label(" " + text);
+                } else {
+                    this.set_applet_label(text);
+                }
             } else {
                 this.set_applet_tooltip(_("Places"));
             }
