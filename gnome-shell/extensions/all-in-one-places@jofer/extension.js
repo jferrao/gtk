@@ -311,9 +311,22 @@ AllInOnePlaces.prototype =
         PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
         
         this._getConfig();
+/*
+        this.actor.get_children().forEach(function(c) {
+            c.destroy()
+        });
+*/
+        if (config.SHOW_PANEL_TEXT) {
+            this.box = new St.BoxLayout();
+            if (config.SHOW_PANEL_TEXT) {
+                this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
+                this.box.add(this.icon);
+            }
+            this.label = new St.Label({ text: "  " + _("Places"), style_class: 'places-label' });
+            this.box.add(this.label);
         
-        this.label = new St.Label({ text: _("Places") });
-        this.actor.add_actor(this.label);
+            this.actor.add_actor(this.box);
+        }
 
         this._display();
     },
