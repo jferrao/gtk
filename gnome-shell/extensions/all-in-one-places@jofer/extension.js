@@ -1,10 +1,10 @@
 /**
- * All-in-one Places extension for Gnome Shell
+ * All-in-one Places extension for Gnome Shell 3.2.
  * http://jferrao.github.com/gtk
  * 
  * 
  * @author jferrao <jferrao@ymail.com>
- * @version 1.3
+ * @version 1.3.1
  * 
  */
 
@@ -326,12 +326,16 @@ AllInOnePlaces.prototype =
             });
 
             this.box = new St.BoxLayout();
+            
             if (config.SHOW_PANEL_ICON) {
                 this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
                 this.box.add(this.icon);
+                labelClass = 'places-label-icon';
+            } else {
+                labelClass = 'places-label';
             }
             let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
-            this.label = new St.Label({ text: "  " + text, style_class: 'places-label' });
+            this.label = new St.Label({ text: text, style_class: labelClass });
             this.box.add(this.label);
         
             this.actor.add_actor(this.box);
