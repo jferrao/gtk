@@ -26,9 +26,19 @@
             <summary>Panel text</summary>
             <description/>
         </key>
-        <key name="item-icon-size" type="i">
-            <default>22</default>
-            <summary>Menu item icon size</summary>
+        <key name="file-manager" type="s">
+            <default>'nautilus'</default>
+            <summary>The used file system manager</summary>
+            <description/>
+        </key>
+        <key name="connect-command" type="s">
+            <default>'nautilus-connect-server'</default>
+            <summary>Application for the "Connect to..." item</summary>
+            <description/>
+        </key>
+        <key name="search-command" type="s">
+            <default>'gnome-search-tool'</default>
+            <summary>Application for the "Search" item</summary>
             <description/>
         </key>
         <key name="show-desktop-item" type="b">
@@ -94,6 +104,11 @@
         <key name="max-documents-documents" type="i">
             <default>10</default>
             <summary>Maximum number of recent documents</summary>
+            <description/>
+        </key>
+        <key name="item-icon-size" type="i">
+            <default>22</default>
+            <summary>Menu item icon size</summary>
             <description/>
         </key>
     </schema>
