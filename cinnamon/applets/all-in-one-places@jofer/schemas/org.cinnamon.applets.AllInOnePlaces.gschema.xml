@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="gnome-shell-extensions-AllInOnePlaces">
-    <schema path="/org/gnome/shell/extensions/AllInOnePlaces/" id="org.gnome.shell.extensions.AllInOnePlaces">
-        <key name="left-panel-menu" type="b">
-            <default>false</default>
-            <summary>Show icon in left side of panel</summary>
-            <description/>
-        </key>
+<schemalist gettext-domain="cinnamon-applets-AllInOnePlaces">
+    <schema path="/org/cinnamon/applets/AllInOnePlaces/" id="org.cinnamon.applets.AllInOnePlaces">
         <key name="show-panel-icon" type="b">
             <default>true</default>
             <summary>Show panel icon</summary>
+            <description/>
+        </key>
+        <key name="full-color-panel-icon" type="b">
+            <default>false</default>
+            <summary>Show the panel icon in full color</summary>
             <description/>
         </key>
         <key name="panel-icon-size" type="i">
