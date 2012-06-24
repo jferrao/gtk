@@ -19,51 +19,48 @@ Requires Python 2.7
 from optparse import OptionParser
 from gi.repository import Gio, Gtk
 import os
-import json
-import collections
 
 from gettext import gettext as _
 
 
-SCHEMA = "org.cinnamon.applets.AllInOnePlaces"
-
-SETTINGS = Gio.Settings.new(SCHEMA)
+APPLET_DIR = os.path.dirname(os.path.abspath(__file__)) 
+SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces"
 
 PANEL_WIDGETS = [
-    {'type': 'switch', 'args': { 'key': 'show-panel-icon', 'label': "Show panel icon" }},
-    {'type': 'switch', 'args': { 'key': 'full-color-panel-icon', 'label': "Show the panel icon in full color" }},
-    {'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': "Panel icon size", 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
-    {'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': "Show text in panel" }},
-    {'type': 'entry', 'args': { 'key': 'panel-text', 'label': "Panel text" }},
-    {'type': 'combo', 'args': { 'key': 'file-manager', 'label': "File manager", 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
-    {'type': 'entry', 'args': { 'key': 'connect-command', 'label': "Application for the  \"Connect to...\" item" }},
-    {'type': 'entry', 'args': { 'key': 'search-command', 'label': "Application for the \"Search\" item" }},
+    {'type': 'switch', 'args': { 'key': 'show-panel-icon', 'label': _("Show panel icon") }},
+    {'type': 'switch', 'args': { 'key': 'full-color-panel-icon', 'label': _("Show the panel icon in full color") }},
+    {'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': _("Panel icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
+    {'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
+    {'type': 'entry', 'args': { 'key': 'panel-text', 'label': _("Panel text") }},
+    {'type': 'combo', 'args': { 'key': 'file-manager', 'label': _("File manager"), 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
+    {'type': 'entry', 'args': { 'key': 'connect-command', 'label': _("Application for the  \"Connect to...\" item") }},
+    {'type': 'entry', 'args': { 'key': 'search-command', 'label': _("Application for the \"Search\" item") }}
 ]
 
 MENU_WIDGETS = [
-    {'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': "Show desktop item" }},
-    {'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': "Show trash item" }},
-    {'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': "Hide empty trash item" }},
-    {'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': "Show bookmarks section" }},
-    {'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': "Drop-down style bookmarks section" }},
-    {'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': "Show file system item" }},
-    {'type': 'switch', 'args': { 'key': 'show-devices-section', 'label': "Show devices section" }},
-    {'type': 'switch', 'args': { 'key': 'collapse-devices-section', 'label': "Drop-down style devices section" }},
-    {'type': 'switch', 'args': { 'key': 'show-network-section', 'label': "Show network section" }},
-    {'type': 'switch', 'args': { 'key': 'collapse-network-section', 'label': "Drop-down style network section" }},
-    {'type': 'switch', 'args': { 'key': 'show-search-item', 'label': "Show search item" }},
-    {'type': 'switch', 'args': { 'key': 'show-documents-section', 'label': "Show recent documents section" }},
-    {'type': 'slider', 'args': { 'key': 'max-documents-documents', 'label': "Maximum number of recent documents", 'min': 5, 'max': 25, 'step': 1, 'default': 10 }},
-    {'type': 'slider', 'args': { 'key': 'item-icon-size', 'label': "Menu item icon size", 'min': 8, 'max': 46, 'step': 1, 'default': 22 }},
+    {'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
+    {'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
+    {'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide empty trash item") }},
+    {'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
+    {'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
+    {'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
+    {'type': 'switch', 'args': { 'key': 'show-devices-section', 'label': _("Show devices section") }},
+    {'type': 'switch', 'args': { 'key': 'collapse-devices-section', 'label': _("Drop-down style devices section") }},
+    {'type': 'switch', 'args': { 'key': 'show-network-section', 'label': _("Show network section") }},
+    {'type': 'switch', 'args': { 'key': 'collapse-network-section', 'label': _("Drop-down style network section") }},
+    {'type': 'switch', 'args': { 'key': 'show-search-item', 'label': _("Show search item") }},
+    {'type': 'switch', 'args': { 'key': 'show-documents-section', 'label': _("Show recent documents section") }},
+    {'type': 'slider', 'args': { 'key': 'max-documents-documents', 'label': _("Maximum number of recent documents"), 'min': 5, 'max': 25, 'step': 1, 'default': 10 }},
+    {'type': 'slider', 'args': { 'key': 'item-icon-size', 'label': _("Menu item icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 22 }},
 ]
 
-class SettingsWindow(Gtk.Window):
 
-    restart = False
+
+class SettingsWindow(Gtk.Window):
+    ''' Build settings panel window '''
 
     def __init__(self):
-        
-        Gtk.Window.__init__(self, title="All-in-one Places Applet Settings")
+        Gtk.Window.__init__(self, title=_("All-in-one Places Applet Settings"))
         frame = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, border_width=10, spacing=10)
 
         # Global tab
@@ -86,8 +83,8 @@ class SettingsWindow(Gtk.Window):
         tabs = Gtk.Notebook()
         tabs.set_scrollable(True)
         tabs.set_size_request(100, 100)
-        tabs.append_page(box_panel, Gtk.Label(label="Global"))
-        tabs.append_page(box_items, Gtk.Label(label="Menu items"))
+        tabs.append_page(box_panel, Gtk.Label(label=_("Global")))
+        tabs.append_page(box_items, Gtk.Label(label=_("Menu items")))
         frame.pack_start(tabs, False, False, 0)
         frame.show_all()
         self.add(frame)
@@ -120,36 +117,65 @@ class SettingsWindow(Gtk.Window):
 
         
 
+class Settings(object):
+    ''' Get settings values using gsettings '''
+    
+    _settings = None
+
+    def __new__(cls, *p, **k):
+        ''' Implementation of the borg pattern
+        This way we make sure that all instances share the same state 
+        and that the schema is read from file only once.
+        '''
+        if not '_the_instance' in cls.__dict__:
+            cls._the_instance = object.__new__(cls)
+        return cls._the_instance    
+
+    def set_settings(self, schema_name):
+        ''' Get settings values from corresponding schema file '''
+        # Try to get schema from local installation directory
+        schemas_dir = "%s/schemas" % APPLET_DIR
+        if os.path.isfile("%s/gschemas.compiled" % schemas_dir):
+            schema_source = Gio.SettingsSchemaSource.new_from_directory(schemas_dir, Gio.SettingsSchemaSource.get_default(), False)
+            schema = schema_source.lookup(schema_name, False)
+            self._settings = Gio.Settings.new_full(schema, None, None)
+        # Schema is installed system-wide
+        else:
+            self._settings = Gio.Settings.new(schema_name)
+
+    def get_settings(self):
+        return self._settings
+
 
 
 class Widgets():
-    global SETTINGS
-    
+    ''' Build widgets associated with gsettings values '''
+
     def switch(self, key, label):
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.Switch()
-        widget.set_active(SETTINGS.get_boolean(key))
+        widget.set_active(Settings().get_settings().get_boolean(key))
         widget.connect('notify::active', self._switch_change, key)
         box.pack_start(label, False, False, 20)
         box.pack_end(widget, False, False, 0)        
         return box
         
     def _switch_change(self, widget, notice, key):
-        SETTINGS.set_boolean(key, widget.get_active())	
+        Settings().get_settings().set_boolean(key, widget.get_active())	
 
     def entry(self, key, label):
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.Entry(hexpand=True)
-        widget.set_text(SETTINGS.get_string(key))
+        widget.set_text(Settings().get_settings().get_string(key))
         widget.connect('changed', self._entry_change, key)
         box.pack_start(label, False, False, 20)
         box.add(widget)    
         return box
 
     def _entry_change(self, widget, key):
-        SETTINGS.set_string(key, widget.get_text());
+        Settings().get_settings().set_string(key, widget.get_text());
 
     def combo(self, key, label, values):
         box = Gtk.HBox()
@@ -157,20 +183,20 @@ class Widgets():
         widget = Gtk.ComboBoxText()
         for command, name in values.items():
             widget.append(command, name)
-        widget.set_active_id(SETTINGS.get_string(key))
+        widget.set_active_id(Settings().get_settings().get_string(key))
         widget.connect('changed', self._combo_change, key)
         box.pack_start(label, False, False, 20)
         box.pack_end(widget, False, False, 0)
         return box
 
     def _combo_change(self, widget, key):
-        SETTINGS.set_string(key, widget.get_active_id())
+        Settings().get_settings().set_string(key, widget.get_active_id())
 
     def slider(self, key, label, min, max, step, default):
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.HScale.new_with_range(min, max, step)
-        widget.set_value(SETTINGS.get_int(key));
+        widget.set_value(Settings().get_settings().get_int(key));
         widget.connect('value_changed', self._slider_change, key)
         widget.set_size_request(200, -1)
         box.pack_start(label, False, False, 20)
@@ -178,13 +204,17 @@ class Widgets():
         return box
         
     def _slider_change(self, widget, key):
-        SETTINGS.set_int(key, widget.get_value())
+        Settings().get_settings().set_int(key, widget.get_value())
 
 
 
 
 
 if __name__ == "__main__":
+    
+    # Initialize and load gsettings values
+    Settings().set_settings(SCHEMA_NAME)
+    
     win = SettingsWindow()
     win.connect("delete-event", Gtk.main_quit)
     win.show_all()
