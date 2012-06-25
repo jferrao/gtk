@@ -38,36 +38,9 @@ const Lib = Extension.imports.lib;
 
 const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
-let SETIINGS = undefined;
+let settings;
 
 
-
-config = null;
-
-
-
-/**
- * Default configuration options in case something goes wrong with the config.json file.
- */
-defaultConfig = {
-    "LEFT_PANEL_MENU": false, 
-    "SHOW_PANEL_ICON": true, 
-    "SHOW_PANEL_TEXT": false, 
-    "PANEL_TEXT": null, 
-    "SHOW_DESKTOP": true, 
-    "AUTO_HIDE_TRASH": false, 
-    "SHOW_BOOKMARKS": true, 
-    "COLLAPSE_BOOKMARKS": false, 
-    "SHOW_FILE_SYSTEM": false, 
-    "SHOW_DEVICES": true, 
-    "COLLAPSE_DEVICES": false, 
-    "SHOW_NETWORK": true, 
-    "COLLAPSE_NETWORK": false, 
-    "SHOW_SEARCH": true, 
-    "SHOW_RECENT_DOCUMENTS": true, 
-    "ICON_SIZE": 22, 
-    "RECENT_ITEMS": 10    
-};
 
 /**
  * Messages for the confirmation dialog boxes.
@@ -98,8 +71,8 @@ MenuItem.prototype =
     {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
             
-        this.label = new St.Label({ text: text });
-        this.addActor(this.label);
+        let label = new St.Label({ text: text });
+        this.addActor(label);
         this.addActor(icon);
     }
 };
@@ -114,18 +87,17 @@ function DeviceMenuItem()
 
 DeviceMenuItem.prototype =
 {
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    __proto__: MenuItem.prototype,
     
     _init: function(device, icon, text, params)
     {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-        
+        MenuItem.prototype._init.call(this, icon, text, params);
         this.device = device;
-        
-        this.label = new St.Label({ text: text });
-        this.addActor(this.label);
-        this.addActor(icon);
-        
+        this._addEjectButton();
+    },
+    
+    _addEjectButton: function()
+    {
         let ejectIcon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
         let ejectButton = new St.Button({ child: ejectIcon });
         ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
@@ -173,12 +145,12 @@ TrashMenuItem.prototype =
         this._checkTrashStatus();
 
         this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this._trashConn = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
+        this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
     
     destroy: function()
     {
-        this.monitor.disconnect(this._trashConn);
+        this.monitor.disconnect(this._trashChanged);
         this.actor.destroy();
     },
     
@@ -191,13 +163,13 @@ TrashMenuItem.prototype =
     
     _trashItemEmpty: function()
     {
-        this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: SETTINGS.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
+        this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._trashItemBase(this.icon);
     },
     
     _trashItemFull: function()
     {
-        this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: SETTINGS.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
+        this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._trashItemBase(this.icon);
         
         let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
@@ -219,13 +191,13 @@ TrashMenuItem.prototype =
         if (children.next_file(null, null) == null) {
             this._clearTrashItem();
             this._trashItemEmpty();
-            if (SETTINGS.get_boolean('hide-empty-trash-item')) {
+            if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.visible = false;
             }
         } else {
             this._clearTrashItem();
             this._trashItemFull();
-            if (SETTINGS.get_boolean('hide-empty-trash-item')) {
+            if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.show();
                 this.actor.visible = true;
             }
@@ -254,6 +226,7 @@ TrashMenuItem.prototype =
     }
 
 };
+
 
 
 
@@ -320,72 +293,94 @@ AllInOnePlaces.prototype =
 
     _init: function()
     {
-        SETTINGS = Lib.getSettings(Extension, SCHEMA_NAME);
-        // Refresh menu on settings change
-        this._settingsChangedId = SETTINGS.connect('changed', Lang.bind(this, this._display));
-
         PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
-        
-        this._getConfig();
-        
-        if (!SETTINGS.get_boolean('show-panel-icon') && !SETTINGS.get_boolean('show-panel-text')) {
-            config.SHOW_PANEL_ICON = true;
-        }
 
-        this._display();
+        // Refresh menu on settings change and display extension on panel
+        this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
+        this._displayOnPanel();
     },
 
-    _display : function()
+    _onButtonPress: function(actor, event)
     {
-        // Clean up all status button children
+        let button = event.get_button();
+        if (button == 1) {
+            this._displayMenu();
+        } else if (button == 3) {
+            this._displayContext();
+        }
+        return PanelMenu.Button.prototype._onButtonPress.call(this, actor, event);
+    },
+
+    _displayOnPanel: function()
+    {
+        let show_panel_icon;
+        
+        // Do not allow both icon and text to be false
+        if (!settings.get_boolean('show-panel-icon') && !settings.get_boolean('show-panel-text')) {
+            show_panel_icon = true;
+        } else {
+            show_panel_icon = settings.get_boolean('show-panel-icon');
+        }
+        
+        // Clean up all actor's children
         this.actor.get_children().forEach(function(c) {
             c.destroy()
         });
-        
-        if (SETTINGS.get_boolean('show-panel-text')) {
+
+        if (settings.get_boolean('show-panel-text')) {
             this.box = new St.BoxLayout();
 
-            if (SETTINGS.get_boolean('show-panel-icon')) {
-                this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
+            if (show_panel_icon) {
+                this.icon = new St.Icon({ icon_name: 'folder', icon_size: settings.get_int('panel-icon-size'), icon_type: St.IconType.SYMBOLIC });
                 this.box.add(this.icon);
                 labelClass = 'places-label-icon';
             } else {
                 labelClass = 'places-label';
             }
-            let text = (SETTINGS.get_string('panel-text')) ? SETTINGS.get_string('panel-text') : _("Places");
+            let text = (settings.get_string('panel-text')) ? settings.get_string('panel-text') : _("Places");
             this.label = new St.Label({ text: text, style_class: labelClass });
             this.box.add(this.label);
         
             this.actor.add_actor(this.box);
         } else {
-            this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
+            this.icon = new St.Icon({ icon_name: 'folder', icon_size: settings.get_int('panel-icon-size'), icon_type: St.IconType.SYMBOLIC });
             this.actor.add_actor(this.icon);
         }
-        
+    },
+
+    _displayContext: function()
+    {
+        this.menu.removeAll();
+        let icon = new St.Icon({icon_name: 'gnome-settings', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
+        this.settingsItem = new MenuItem(icon, _("Settings"));
+        this.settingsItem.connect('activate', function(actor, event) {
+            new launch().command("gnome-shell-extension-prefs all-in-one-places@jofer");
+        });
+        this.menu.addMenuItem(this.settingsItem);
+    },
+
+    _displayMenu: function()
+    {
         // Clean up all menu items
         this.menu.removeAll();
-        
-        
-        // Show default places section - not used on this version.
-        //this._createDefaultPlaces();
         
         // Show home section
         this._createHome();
 
         // Show desktop section
-        if (SETTINGS.get_boolean('show-desktop-item')) {
+        if (settings.get_boolean('show-desktop-item')) {
             this._createDesktop();
         }
 
         // Show trash item
-        if (SETTINGS.get_boolean('show-trash-item')) {
+        if (settings.get_boolean('show-trash-item')) {
             this._createTrash();
         }
 
         // Show bookmarks section
-        if (SETTINGS.get_boolean('show-bookmarks-section')) {
+        if (settings.get_boolean('show-bookmarks-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (SETTINGS.get_boolean('collapse-bookmarks-section')) {
+            if (settings.get_boolean('collapse-bookmarks-section')) {
                 this._bookmarksSection = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
                 this.menu.addMenuItem(this._bookmarksSection);
                 this._createBookmarks();
@@ -396,7 +391,7 @@ AllInOnePlaces.prototype =
             }
             
             // Monitor bookmarks changes
-            this._bookmarksConn = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
+            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
         }   
         
         // Show computer item
@@ -404,13 +399,13 @@ AllInOnePlaces.prototype =
         this._createComputer();
 
         // Show File System item
-        if (SETTINGS.get_boolean('show-filesystem-item')) {
+        if (settings.get_boolean('show-filesystem-item')) {
             this._createFileSystem();
         }
 
         // Show devices section
-        if (SETTINGS.get_boolean('show-devices-section')) {
-            if (SETTINGS.get_boolean('collapse-devices-section')) {
+        if (settings.get_boolean('show-devices-section')) {
+            if (settings.get_boolean('collapse-devices-section')) {
                 this._devicesSection = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
                 this.menu.addMenuItem(this._devicesSection);
                 this._createDevices();
@@ -421,13 +416,13 @@ AllInOnePlaces.prototype =
             }
             
             // Monitor mounts changes
-            this._devicesConn = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
+            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
         }
 
         // Show network section
-        if (SETTINGS.get_boolean('show-network-section')) {
+        if (settings.get_boolean('show-network-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (SETTINGS.get_boolean('collapse-network-section')) {
+            if (settings.get_boolean('collapse-network-section')) {
                 this._networkSection = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
                 this.menu.addMenuItem(this._networkSection);
                 this._createNetwork();
@@ -438,16 +433,16 @@ AllInOnePlaces.prototype =
             }
         }
 
-        if (SETTINGS.get_boolean('show-search-item') || SETTINGS.get_boolean('show-documents-section')) {
+        if (settings.get_boolean('show-search-item') || settings.get_boolean('show-documents-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
             // Show search section
-            if (SETTINGS.get_boolean('show-search-item')) {
+            if (settings.get_boolean('show-search-item')) {
                 this._createSearch();
             }
 
             // Show recent documents section
-            if (SETTINGS.get_boolean('show-documents-section')) {
+            if (settings.get_boolean('show-documents-section')) {
                 this.RecentManager = new Gtk.RecentManager();
 
                 this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
@@ -455,7 +450,7 @@ AllInOnePlaces.prototype =
                 this._createRecent();
             
                 // Monitor recent documents changes 
-                this._recentConn = this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+                this._recentChanged = this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
             }
         }
         
@@ -466,10 +461,10 @@ AllInOnePlaces.prototype =
      */
     disconnect: function()
     {
-        if (this._settingsChangedId) SETTINGS.disconnect(this._settingsChangedId);
-        if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
-        if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
-        if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
+        if (this._settingsChanged) settings.disconnect(this._settingsChanged);
+        if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
+        if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
+        if (this._recentChanged) this.RecentManager.disconnect(this._recentChanged);
     },
 
     /**
@@ -477,10 +472,10 @@ AllInOnePlaces.prototype =
      */
     _createComputer: function()
     {
-        let icon = new St.Icon({icon_name: 'computer', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'computer', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.computerItem = new MenuItem(icon, _("Computer"));
         this.computerItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus computer://");
+            new launch().command(settings.get_string('file-manager') + " computer://");
         });
         this.menu.addMenuItem(this.computerItem);
     },
@@ -490,10 +485,10 @@ AllInOnePlaces.prototype =
      */
     _createFileSystem: function()
     {
-        let icon = new St.Icon({icon_name: 'drive-harddisk', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'drive-harddisk', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.filesystemItem = new MenuItem(icon, _("File System"));
         this.filesystemItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus /");
+            new launch().command(settings.get_string('file-manager') + " /");
         });
         this.menu.addMenuItem(this.filesystemItem);
     },
@@ -503,10 +498,10 @@ AllInOnePlaces.prototype =
      */
     _createHome: function()
     {
-        let icon = new St.Icon({icon_name: 'user-home', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'user-home', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.homeItem = new MenuItem(icon, _("Home Folder"));
         this.homeItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus");
+            new launch().command(settings.get_string('file-manager'));
         });
         this.menu.addMenuItem(this.homeItem);
     },
@@ -516,31 +511,13 @@ AllInOnePlaces.prototype =
      */
     _createDesktop: function()
     {
-        let icon = new St.Icon({icon_name: 'user-desktop', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'user-desktop', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.desktopItem = new MenuItem(icon, _("Desktop"));
         this.desktopItem.connect('activate', function(actor, event) {
             let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
-            new launch().command("nautilus \"" + desktop_folder.replace(" ","\ ") + "\"");
+            new launch().command(settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\"");
         });
         this.menu.addMenuItem(this.desktopItem);
-    },
-
-    /**
-     * Build default places section
-     */
-    _createDefaultPlaces : function()
-    {
-        this.defaultPlaces = Main.placesManager.getDefaultPlaces();
-        for (let placeid = 0; placeid < this.defaultPlaces.length; placeid++) {
-            let icon = this.defaultPlaces[placeid].iconFactory(config.ICON_SIZE);
-            let defaultItem = new MenuItem(icon, _(this.defaultPlaces[placeid].name));
-            defaultItem.place = this.defaultPlaces[placeid];
-            
-            defaultItem.connect('activate', function(actor, event) {
-                actor.place.launch();
-            });
-            this.menu.addMenuItem(defaultItem);
-        }
     },
 
     /**
@@ -562,7 +539,7 @@ AllInOnePlaces.prototype =
         sectionMenu = (this._bookmarksSection.menu) ? this._bookmarksSection.menu : this._bookmarksSection;
 
         for (let bookmarkid = 0; bookmarkid < this.bookmarks.length; bookmarkid++) {
-            let icon = this.bookmarks[bookmarkid].iconFactory(config.ICON_SIZE);
+            let icon = this.bookmarks[bookmarkid].iconFactory(settings.get_int('item-icon-size'));
             let bookmarkItem = new MenuItem(icon, this.bookmarks[bookmarkid].name);
             bookmarkItem.place = this.bookmarks[bookmarkid];
             
@@ -595,7 +572,7 @@ AllInOnePlaces.prototype =
         sectionMenu = (this._devicesSection.menu) ? this._devicesSection.menu : this._devicesSection;
 
         for (let devid = 0; devid < this.devices.length; devid++) {
-            let icon = this.devices[devid].iconFactory(config.ICON_SIZE);
+            let icon = this.devices[devid].iconFactory(settings.get_int('item-icon-size'));
             let deviceItem = new DeviceMenuItem(this.devices[devid], icon, this.devices[devid].name);
             sectionMenu.addMenuItem(deviceItem);
         }
@@ -626,17 +603,17 @@ AllInOnePlaces.prototype =
     {
         sectionMenu = (this._networkSection.menu) ? this._networkSection.menu : this._networkSection;
         
-        let icon = new St.Icon({icon_name: 'network-workgroup', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'network-workgroup', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.networkItem = new MenuItem(icon, _("Network"));
         this.networkItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus network:///");
+            new launch().command(settings.get_string('file-manager') + " network:///");
         });
         sectionMenu.addMenuItem(this.networkItem);
         
-        let icon = new St.Icon({icon_name: 'gnome-globe', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'gnome-globe', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.connectItem = new MenuItem(icon, _("Connect to..."));
         this.connectItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus-connect-server");
+            new launch().command(settings.get_string('connect-command'));
         });        
         sectionMenu.addMenuItem(this.connectItem);
     },
@@ -647,12 +624,12 @@ AllInOnePlaces.prototype =
      */
     _createSearch: function()
     {
-        let icon = new St.Icon({icon_name: 'search', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: 'search', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.searchItem = new MenuItem(icon, _("Search"));
         this.menu.addMenuItem(this.searchItem);
 
         this.searchItem.connect('activate', function(actor, event) {
-            new launch().command("gnome-search-tool");
+            new launch().command(settings.get_string('search-command'));
         });
     },
 
@@ -665,8 +642,8 @@ AllInOnePlaces.prototype =
 
         if (this.RecentManager.size > 0) {
             let items = this.RecentManager.get_items();
-            while (id < config.RECENT_ITEMS && id < this.RecentManager.size) {
-                let icon =  new St.Icon({icon_name: items[id].get_mime_type().replace("\/","-"), icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+            while (id < settings.get_int('max-documents-documents') && id < this.RecentManager.size) {
+                let icon =  new St.Icon({icon_name: items[id].get_mime_type().replace("\/","-"), icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
                 let recentItem = new MenuItem(icon, items[id].get_display_name());
                 this._recentSection.menu.addMenuItem(recentItem);
 
@@ -717,16 +694,6 @@ AllInOnePlaces.prototype =
     {
         new launch().file(c);
     },
-
-    _getConfig: function()
-    {
-        let configFile = GLib.build_filenamev([global.userdatadir, 'extensions/all-in-one-places@jofer/config.json']);
-        try {
-            config = JSON.parse(Shell.get_file_contents_utf8_sync(configFile));
-        } catch (e) {
-            config = defaultConfig;
-        }
-    }
  
 };
 
@@ -759,11 +726,19 @@ function init() {}
 
 let _indicator;
 
-function enable() {
+function enable()
+{
+    // Load settings
+    try {
+        settings = Lib.getSettings(Extension, SCHEMA_NAME);
+    } catch(e) {
+        throw new Error(_("Unable to load settings."));
+    }
+
     _indicator = new AllInOnePlaces();
 
     // Icon on the Left or right panel
-    if (config.LEFT_PANEL_MENU) {
+    if (settings.get_boolean('left-panel-menu')) {
         Main.panel._leftBox.insert_child_at_index(_indicator.actor, 1);
         Main.panel._leftBox.child_set(_indicator.actor, { y_fill : true } );
         Main.panel._menus.addMenu(_indicator.menu);
