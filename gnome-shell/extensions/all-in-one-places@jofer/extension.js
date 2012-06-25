@@ -31,11 +31,20 @@ const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const FileUtils = imports.misc.fileUtils;
 
+const Extension = imports.misc.extensionUtils.getCurrentExtension();
+const Lib = Extension.imports.lib;
 
+
+
+const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
+
+let SETIINGS = undefined;
 
 
 
 config = null;
+
+
 
 /**
  * Default configuration options in case something goes wrong with the config.json file.
@@ -182,13 +191,13 @@ TrashMenuItem.prototype =
     
     _trashItemEmpty: function()
     {
-        this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: SETTINGS.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._trashItemBase(this.icon);
     },
     
     _trashItemFull: function()
     {
-        this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: SETTINGS.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._trashItemBase(this.icon);
         
         let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
@@ -210,13 +219,13 @@ TrashMenuItem.prototype =
         if (children.next_file(null, null) == null) {
             this._clearTrashItem();
             this._trashItemEmpty();
-            if (config.AUTO_HIDE_TRASH) {
+            if (SETTINGS.get_boolean('hide-empty-trash-item')) {
                 this.actor.visible = false;
             }
         } else {
             this._clearTrashItem();
             this._trashItemFull();
-            if (config.AUTO_HIDE_TRASH) {
+            if (SETTINGS.get_boolean('hide-empty-trash-item')) {
                 this.actor.show();
                 this.actor.visible = true;
             }
@@ -311,34 +320,16 @@ AllInOnePlaces.prototype =
 
     _init: function()
     {
+        SETTINGS = Lib.getSettings(Extension, SCHEMA_NAME);
+        // Refresh menu on settings change
+        this._settingsChangedId = SETTINGS.connect('changed', Lang.bind(this, this._display));
+
         PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
         
         this._getConfig();
         
-        if (!config.SHOW_PANEL_ICON && !config.SHOW_PANEL_TEXT) {
+        if (!SETTINGS.get_boolean('show-panel-icon') && !SETTINGS.get_boolean('show-panel-text')) {
             config.SHOW_PANEL_ICON = true;
-        }
-
-        if (config.SHOW_PANEL_TEXT) {
-            // Clean up all status button children
-            this.actor.get_children().forEach(function(c) {
-                c.destroy()
-            });
-
-            this.box = new St.BoxLayout();
-
-            if (config.SHOW_PANEL_ICON) {
-                this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
-                this.box.add(this.icon);
-                labelClass = 'places-label-icon';
-            } else {
-                labelClass = 'places-label';
-            }
-            let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
-            this.label = new St.Label({ text: text, style_class: labelClass });
-            this.box.add(this.label);
-        
-            this.actor.add_actor(this.box);
         }
 
         this._display();
@@ -346,6 +337,34 @@ AllInOnePlaces.prototype =
 
     _display : function()
     {
+        // Clean up all status button children
+        this.actor.get_children().forEach(function(c) {
+            c.destroy()
+        });
+        
+        if (SETTINGS.get_boolean('show-panel-text')) {
+            this.box = new St.BoxLayout();
+
+            if (SETTINGS.get_boolean('show-panel-icon')) {
+                this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
+                this.box.add(this.icon);
+                labelClass = 'places-label-icon';
+            } else {
+                labelClass = 'places-label';
+            }
+            let text = (SETTINGS.get_string('panel-text')) ? SETTINGS.get_string('panel-text') : _("Places");
+            this.label = new St.Label({ text: text, style_class: labelClass });
+            this.box.add(this.label);
+        
+            this.actor.add_actor(this.box);
+        } else {
+            this.icon = new St.Icon({ icon_name: 'folder', icon_size: 14, icon_type: St.IconType.SYMBOLIC });
+            this.actor.add_actor(this.icon);
+        }
+        
+        // Clean up all menu items
+        this.menu.removeAll();
+        
         
         // Show default places section - not used on this version.
         //this._createDefaultPlaces();
@@ -354,17 +373,19 @@ AllInOnePlaces.prototype =
         this._createHome();
 
         // Show desktop section
-        if (config.SHOW_DESKTOP) {
+        if (SETTINGS.get_boolean('show-desktop-item')) {
             this._createDesktop();
         }
 
         // Show trash item
-        this._createTrash();
+        if (SETTINGS.get_boolean('show-trash-item')) {
+            this._createTrash();
+        }
 
         // Show bookmarks section
-        if (config.SHOW_BOOKMARKS) {
+        if (SETTINGS.get_boolean('show-bookmarks-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (config.COLLAPSE_BOOKMARKS) {
+            if (SETTINGS.get_boolean('collapse-bookmarks-section')) {
                 this._bookmarksSection = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
                 this.menu.addMenuItem(this._bookmarksSection);
                 this._createBookmarks();
@@ -383,13 +404,13 @@ AllInOnePlaces.prototype =
         this._createComputer();
 
         // Show File System item
-        if (config.SHOW_FILE_SYSTEM) {
+        if (SETTINGS.get_boolean('show-filesystem-item')) {
             this._createFileSystem();
         }
 
         // Show devices section
-        if (config.SHOW_DEVICES) {
-            if (config.COLLAPSE_DEVICES) {
+        if (SETTINGS.get_boolean('show-devices-section')) {
+            if (SETTINGS.get_boolean('collapse-devices-section')) {
                 this._devicesSection = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
                 this.menu.addMenuItem(this._devicesSection);
                 this._createDevices();
@@ -404,9 +425,9 @@ AllInOnePlaces.prototype =
         }
 
         // Show network section
-        if (config.SHOW_NETWORK) {
+        if (SETTINGS.get_boolean('show-network-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (config.COLLAPSE_NETWORK) {
+            if (SETTINGS.get_boolean('collapse-network-section')) {
                 this._networkSection = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
                 this.menu.addMenuItem(this._networkSection);
                 this._createNetwork();
@@ -417,16 +438,16 @@ AllInOnePlaces.prototype =
             }
         }
 
-        if (config.SHOW_SEARCH || config.SHOW_RECENT_DOCUMENTS) {
+        if (SETTINGS.get_boolean('show-search-item') || SETTINGS.get_boolean('show-documents-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
             // Show search section
-            if (config.SHOW_SEARCH) {
+            if (SETTINGS.get_boolean('show-search-item')) {
                 this._createSearch();
             }
 
             // Show recent documents section
-            if (config.SHOW_RECENT_DOCUMENTS) {
+            if (SETTINGS.get_boolean('show-documents-section')) {
                 this.RecentManager = new Gtk.RecentManager();
 
                 this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
@@ -445,6 +466,7 @@ AllInOnePlaces.prototype =
      */
     disconnect: function()
     {
+        if (this._settingsChangedId) SETTINGS.disconnect(this._settingsChangedId);
         if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
         if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
         if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
