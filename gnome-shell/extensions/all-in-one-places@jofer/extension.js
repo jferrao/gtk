@@ -99,11 +99,11 @@ DeviceMenuItem.prototype =
     {
         let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
         let eject_button = new St.Button({ child: eject_icon });
-        eject_button.connect('clicked', Lang.bind(this, this._ejectDevice));
+        eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
         this.addActor(eject_button);
     },
     
-    _ejectDevice: function()
+    _confirmEjectDevice: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doEjectDevice), EJECT_DEVICE_LABEL, EJECT_DEVICE_MESSAGE, _("Cancel"), _("OK")).open();
     },
@@ -364,18 +364,19 @@ AllInOnePlaces.prototype =
         this.menu.removeAll();
         
         // Show home item
-        //this._createHome();
         this.homeItem = this._createStandardItem('user-home', _("Home Folder"), settings.get_string('file-manager'));
         this.menu.addMenuItem(this.homeItem);
 
         // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
-            this._createDesktop();
+            let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
+            this.desktopItem = this._createStandardItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\"");
+            this.menu.addMenuItem(this.desktopItem);
         }
 
         // Show trash item
         if (settings.get_boolean('show-trash-item')) {
-            this._createTrash();
+            this._createTrashItem();
         }
 
         // Show bookmarks section
@@ -384,24 +385,26 @@ AllInOnePlaces.prototype =
             if (settings.get_boolean('collapse-bookmarks-section')) {
                 this._bookmarksSection = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
                 this.menu.addMenuItem(this._bookmarksSection);
-                this._createBookmarks();
+                this._createBookmarksSection();
             } else {
                 this._bookmarksSection = new PopupMenu.PopupMenuSection();
-                this._createBookmarks();
+                this._createBookmarksSection();
                 this.menu.addMenuItem(this._bookmarksSection);
             }
             
             // Monitor bookmarks changes
-            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
+            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarks));
         }   
         
         // Show computer item
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._createComputer();
+        this.computerItem = this._createStandardItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///");
+        this.menu.addMenuItem(this.computerItem);
 
         // Show file system item
         if (settings.get_boolean('show-filesystem-item')) {
-            this._createFileSystem();
+            this.fsItem = this._createStandardItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /");
+            this.menu.addMenuItem(this.fsItem);
         }
 
         // Show devices section
@@ -409,15 +412,15 @@ AllInOnePlaces.prototype =
             if (settings.get_boolean('collapse-devices-section')) {
                 this._devicesSection = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
                 this.menu.addMenuItem(this._devicesSection);
-                this._createDevices();
+                this._createDevicesSection();
             } else {
                 this._devicesSection = new PopupMenu.PopupMenuSection();
-                this._createDevices();
+                this._createDevicesSection();
                 this.menu.addMenuItem(this._devicesSection);
             }
             
             // Monitor mounts changes
-            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
+            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevices));
         }
 
         // Show network section
@@ -426,10 +429,10 @@ AllInOnePlaces.prototype =
             if (settings.get_boolean('collapse-network-section')) {
                 this._networkSection = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
                 this.menu.addMenuItem(this._networkSection);
-                this._createNetwork();
+                this._createNetworkSection();
             } else {
                 this._networkSection = new PopupMenu.PopupMenuSection();
-                this._createNetwork();
+                this._createNetworkSection();
                 this.menu.addMenuItem(this._networkSection);
             }
         }
@@ -439,7 +442,8 @@ AllInOnePlaces.prototype =
 
             // Show search section
             if (settings.get_boolean('show-search-item')) {
-                this._createSearch();
+                this.searchItem = this._createStandardItem('search', _("Search"), settings.get_string('search-command'));
+                this.menu.addMenuItem(this.searchItem);
             }
 
             // Show recent documents section
@@ -448,10 +452,10 @@ AllInOnePlaces.prototype =
 
                 this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
                 this.menu.addMenuItem(this._recentSection);
-                this._createRecent();
+                this._createRecentSection();
             
                 // Monitor recent documents changes 
-                this._recentChanged = this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+                this._recentChanged = this.RecentManager.connect('changed', Lang.bind(this, this._refreshRecent));
             }
         }
         
@@ -468,6 +472,9 @@ AllInOnePlaces.prototype =
         if (this._recentChanged) this.RecentManager.disconnect(this._recentChanged);
     },
     
+    /**
+     * Create a standard item on the main menu
+     */ 
     _createStandardItem: function(icon, label, launcher)
     {
         let icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
@@ -479,62 +486,9 @@ AllInOnePlaces.prototype =
     },
 
     /**
-     * Build computer section
+     * Build trash menu item
      */
-    _createComputer: function()
-    {
-        let icon = new St.Icon({icon_name: 'computer', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.computerItem = new MenuItem(icon, _("Computer"));
-        this.computerItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('file-manager') + " computer://");
-        });
-        this.menu.addMenuItem(this.computerItem);
-    },
-    
-    /**
-     * Build file system section
-     */
-    _createFileSystem: function()
-    {
-        let icon = new St.Icon({icon_name: 'drive-harddisk', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.filesystemItem = new MenuItem(icon, _("File System"));
-        this.filesystemItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('file-manager') + " /");
-        });
-        this.menu.addMenuItem(this.filesystemItem);
-    },
-
-    /**
-     * Build home section
-     */
-    _createHome: function()
-    {
-        let icon = new St.Icon({icon_name: 'user-home', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.homeItem = new MenuItem(icon, _("Home Folder"));
-        this.homeItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('file-manager'));
-        });
-        this.menu.addMenuItem(this.homeItem);
-    },
-
-    /**
-     * Build desktop section
-     */
-    _createDesktop: function()
-    {
-        let icon = new St.Icon({icon_name: 'user-desktop', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.desktopItem = new MenuItem(icon, _("Desktop"));
-        this.desktopItem.connect('activate', function(actor, event) {
-            let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
-            new launch().command(settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\"");
-        });
-        this.menu.addMenuItem(this.desktopItem);
-    },
-
-    /**
-     * Build trash section
-     */
-    _createTrash: function()
+    _createTrashItem: function()
     {
         this.trashItem = new TrashMenuItem(_("Trash"));
         this.menu.addMenuItem(this.trashItem);
@@ -543,7 +497,7 @@ AllInOnePlaces.prototype =
     /**
      * Build bookmarks section
      */
-    _createBookmarks : function()
+    _createBookmarksSection: function()
     {
         this.bookmarks = Main.placesManager.getBookmarks();
 
@@ -561,22 +515,17 @@ AllInOnePlaces.prototype =
         }
     },
     
-    _clearBookmarks : function()
+    _refreshBookmarks: function()
     {
         sectionMenu = (this._bookmarksSection.menu) ?  this._bookmarksSection.menu : this._bookmarksSection;
         this._bookmarksSection.removeAll();
-    },
-
-    _redisplayBookmarks: function()
-    {
-        this._clearBookmarks();
-        this._createBookmarks();
+        this._createBookmarksSection();
     },
 
     /**
      * Build devices section
      */
-    _createDevices : function()
+    _createDevicesSection: function()
     {
         this.devices = Main.placesManager.getMounts();
         
@@ -595,22 +544,18 @@ AllInOnePlaces.prototype =
         }
     },
 
-    _clearDevices : function()
+    _refreshDevices: function()
     {
         sectionMenu = (this._devicesSection.menu) ? this._devicesSection.menu : this._devicesSection;
         sectionMenu.removeAll();
-    },
-
-    _redisplayDevices: function()
-    {
         this._clearDevices();
-        this._createDevices();
+        this._createDevicesSection();
     },
 
     /**
      * Build network section
      */
-    _createNetwork: function()
+    _createNetworkSection: function()
     {
         sectionMenu = (this._networkSection.menu) ? this._networkSection.menu : this._networkSection;
         
@@ -629,25 +574,10 @@ AllInOnePlaces.prototype =
         sectionMenu.addMenuItem(this.connectItem);
     },
 
-
-    /**
-     * Build search section
-     */
-    _createSearch: function()
-    {
-        let icon = new St.Icon({icon_name: 'search', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.searchItem = new MenuItem(icon, _("Search"));
-        this.menu.addMenuItem(this.searchItem);
-
-        this.searchItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('search-command'));
-        });
-    },
-
     /**
      * Build recent documents section
      */
-    _createRecent: function()
+    _createRecentSection: function()
     {
         let id = 0;
 
@@ -668,7 +598,7 @@ AllInOnePlaces.prototype =
             menuItem.addActor(label, { align: St.Align.END });
             let icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
             menuItem.addActor(icon, { align: St.Align.MIDDLE });
-            menuItem.connect('activate', Lang.bind(this, this._clearRecent));
+            menuItem.connect('activate', Lang.bind(this, this._confirmClearRecent));
             this._recentSection.menu.addMenuItem(menuItem);
         }
 
@@ -679,7 +609,7 @@ AllInOnePlaces.prototype =
         }
     },
 
-    _clearRecent: function()
+    _confirmClearRecent: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
     },
@@ -689,7 +619,7 @@ AllInOnePlaces.prototype =
         this.RecentManager.purge_items();
     },
 
-    _redisplayRecent: function()
+    _refreshRecent: function()
     {
         this._recentSection.menu.removeAll();
         if (this.RecentManager.size == 0) {
@@ -697,7 +627,7 @@ AllInOnePlaces.prototype =
         } else {
             this._recentSection.actor.show();
             this._recentSection.actor.visible = true;
-            this._createRecent();
+            this._createRecentSection();
         }
     },
 
