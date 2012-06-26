@@ -427,14 +427,18 @@ AllInOnePlaces.prototype =
         if (settings.get_boolean('show-network-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             if (settings.get_boolean('collapse-network-section')) {
-                this._networkSection = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
-                this.menu.addMenuItem(this._networkSection);
-                this._createNetworkSection();
+                this._network_section = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
             } else {
-                this._networkSection = new PopupMenu.PopupMenuSection();
-                this._createNetworkSection();
-                this.menu.addMenuItem(this._networkSection);
+                this._network_section = new PopupMenu.PopupMenuSection();
             }
+            
+            this.network_item = this._createStandardItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
+            if (this._network_section.menu) { this._network_section.menu.addMenuItem(this.network_item) } else { this._network_section.addMenuItem(this.network_item) }
+
+            this.connect_item = this._createStandardItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
+            if (this._network_section.menu) { this._network_section.menu.addMenuItem(this.connect_item) } else { this._network_section.addMenuItem(this.connect_item) }
+            
+            this.menu.addMenuItem(this._network_section);
         }
 
         if (settings.get_boolean('show-search-item') || settings.get_boolean('show-documents-section')) {
@@ -550,28 +554,6 @@ AllInOnePlaces.prototype =
         sectionMenu.removeAll();
         this._clearDevices();
         this._createDevicesSection();
-    },
-
-    /**
-     * Build network section
-     */
-    _createNetworkSection: function()
-    {
-        sectionMenu = (this._networkSection.menu) ? this._networkSection.menu : this._networkSection;
-        
-        let icon = new St.Icon({icon_name: 'network-workgroup', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.networkItem = new MenuItem(icon, _("Network"));
-        this.networkItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('file-manager') + " network:///");
-        });
-        sectionMenu.addMenuItem(this.networkItem);
-        
-        let icon = new St.Icon({icon_name: 'gnome-globe', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this.connectItem = new MenuItem(icon, _("Connect to..."));
-        this.connectItem.connect('activate', function(actor, event) {
-            new launch().command(settings.get_string('connect-command'));
-        });        
-        sectionMenu.addMenuItem(this.connectItem);
     },
 
     /**
