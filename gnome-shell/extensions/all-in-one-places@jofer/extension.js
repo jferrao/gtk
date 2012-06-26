@@ -1,14 +1,12 @@
 /**
- * All-in-one Places extension for Gnome Shell 3.4.
+ * All-in-one Places extension for Gnome Shell.
  * http://jferrao.github.com/gtk
  * 
  * 
  * @author jferrao <jferrao@ymail.com>
- * @version 1.3.1
+ * @version 2.0
  * 
  */
-
-
 
 
 
@@ -36,6 +34,7 @@ const Lib = Extension.imports.lib;
 
 
 
+const EXTENSION_UUID = "all-in-one-places@jofer"
 const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
 let settings;
@@ -98,10 +97,10 @@ DeviceMenuItem.prototype =
     
     _addEjectButton: function()
     {
-        let ejectIcon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        let ejectButton = new St.Button({ child: ejectIcon });
-        ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
-        this.addActor(ejectButton);
+        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        let eject_button = new St.Button({ child: eject_icon });
+        eject_button.connect('clicked', Lang.bind(this, this._ejectDevice));
+        this.addActor(eject_button);
     },
     
     _ejectDevice: function()
@@ -154,35 +153,35 @@ TrashMenuItem.prototype =
         this.actor.destroy();
     },
     
-    _trashItemBase: function(icon)
+    _showTrashItem: function(icon)
     {
         this.label = new St.Label({ text: this.text });
         this.addActor(this.label);
         this.addActor(icon);
     },
     
-    _trashItemEmpty: function()
+    _showTrashItemEmpty: function()
     {
         this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(this.icon);
+        this._showTrashItem(this.icon);
     },
     
-    _trashItemFull: function()
+    _showTrashItemFull: function()
     {
         this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase(this.icon);
+        this._showTrashItem(this.icon);
         
-        let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.emptyButton = new St.Button({ child: emptyIcon });
-        this.emptyButton.connect('clicked', Lang.bind(this, this._emptyTrash));
-        this.addActor(this.emptyButton);
+        let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        this.empty_button = new St.Button({ child: empty_icon });
+        this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+        this.addActor(this.empty_button);
     },
     
     _clearTrashItem: function()
     {
         if (this.icon) this.removeActor(this.icon);
         if (this.label) this.removeActor(this.label);
-        if (this.emptyButton) this.removeActor(this.emptyButton);
+        if (this.empty_button) this.removeActor(this.empty_button);
     },
     
     _checkTrashStatus: function()
@@ -190,13 +189,13 @@ TrashMenuItem.prototype =
         let children = this.trash_file.enumerate_children('*', 0, null, null);
         if (children.next_file(null, null) == null) {
             this._clearTrashItem();
-            this._trashItemEmpty();
+            this._showTrashItemEmpty();
             if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.visible = false;
             }
         } else {
             this._clearTrashItem();
-            this._trashItemFull();
+            this._showTrashItemFull();
             if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.show();
                 this.actor.visible = true;
@@ -204,7 +203,7 @@ TrashMenuItem.prototype =
         }
     },
     
-    _emptyTrash: function()
+    _confirmEmptyTrash: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doEmptyTrash), EMPTY_TRASH_LABEL, EMPTY_TRASH_MESSAGE, _("Cancel"), _("Empty Trash")).open();
     },
@@ -242,7 +241,7 @@ ConfirmationDialog.prototype =
 {
     __proto__: ModalDialog.ModalDialog.prototype,
 
-    _init: function(doMethod, dialogLabel, dialogMessage, cancelButtonLabel, doButtonLabel)
+    _init: function(callback, label, message, cancel_button_label, callback_button_layer)
     {
         ModalDialog.ModalDialog.prototype._init.call(this, { styleClass: null });
 
@@ -252,25 +251,25 @@ ConfirmationDialog.prototype =
         let messageBox = new St.BoxLayout({ style_class: 'polkit-dialog-message-layout', vertical: true });
         mainContentBox.add(messageBox, { y_align: St.Align.START });
 
-        this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline', text: dialogLabel });
+        this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline', text: label });
         messageBox.add(this._subjectLabel, { y_fill: false, y_align: St.Align.START });
 
-        this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description', text: dialogMessage });
+        this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description', text: message });
         messageBox.add(this._descriptionLabel, { y_fill: true, y_align: St.Align.START });
 
         this.setButtons([
             {
-                label: cancelButtonLabel,
+                label: cancel_button_label,
                 action: Lang.bind(this, function() {
                     this.close();
                 }),
                 key: Clutter.Escape
             },
             {
-                label: doButtonLabel,
+                label: callback_button_layer,
                 action: Lang.bind(this, function() {
                     this.close();
-                    doMethod();
+                    callback();
                 })
             }
         ]);
@@ -295,7 +294,7 @@ AllInOnePlaces.prototype =
     {
         PanelMenu.SystemStatusButton.prototype._init.call(this, 'folder');
 
-        // Refresh menu on settings change and display extension on panel
+        // Monitor settings changes and refresh menu on change
         this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
         this._displayOnPanel();
     },
@@ -354,7 +353,7 @@ AllInOnePlaces.prototype =
         let icon = new St.Icon({icon_name: 'gnome-settings', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this.settingsItem = new MenuItem(icon, _("Settings"));
         this.settingsItem.connect('activate', function(actor, event) {
-            new launch().command("gnome-shell-extension-prefs all-in-one-places@jofer");
+            new launch().command("gnome-shell-extension-prefs " + EXTENSION_UUID);
         });
         this.menu.addMenuItem(this.settingsItem);
     },
@@ -364,10 +363,12 @@ AllInOnePlaces.prototype =
         // Clean up all menu items
         this.menu.removeAll();
         
-        // Show home section
-        this._createHome();
+        // Show home item
+        //this._createHome();
+        this.homeItem = this._createStandardItem('user-home', _("Home Folder"), settings.get_string('file-manager'));
+        this.menu.addMenuItem(this.homeItem);
 
-        // Show desktop section
+        // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
             this._createDesktop();
         }
@@ -398,7 +399,7 @@ AllInOnePlaces.prototype =
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._createComputer();
 
-        // Show File System item
+        // Show file system item
         if (settings.get_boolean('show-filesystem-item')) {
             this._createFileSystem();
         }
@@ -465,6 +466,16 @@ AllInOnePlaces.prototype =
         if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
         if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
         if (this._recentChanged) this.RecentManager.disconnect(this._recentChanged);
+    },
+    
+    _createStandardItem: function(icon, label, launcher)
+    {
+        let icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
+        let item = new MenuItem(icon, label);
+        item.connect('activate', function(actor, event) {
+            new launch().command(launcher);
+        });
+        return item;
     },
 
     /**

@@ -1,19 +1,25 @@
-const Gtk = imports.gi.Gtk;
-//const GObject = imports.gi.GObject;
-const Lang = imports.lang;
+/**
+ * All-in-one Places extension for Gnome Shell.
+ * http://jferrao.github.com/gtk
+ * 
+ * 
+ * @author jferrao <jferrao@ymail.com>
+ * @version 2.0
+ * 
+ */
 
+
+
+const Gtk = imports.gi.Gtk;
+const Lang = imports.lang;
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
-
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
 const Lib = Extension.imports.lib;
-//const options = Extension.imports.menu_items;
 
 
 
-const SCHEMA = "org.gnome.shell.extensions.AllInOnePlaces";
-
-const SETTINGS = Lib.getSettings(Extension, SCHEMA);;
+const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
 const PANEL_WIDGETS = [
     {'type': 'switch', 'args': { 'key': 'left-panel-menu', 'label': _("Show icon on the left side of the panel") }},
@@ -45,6 +51,10 @@ let MENU_WIDGETS = [
 
 
 
+let settings = Lib.getSettings(Extension, SCHEMA_NAME);
+
+
+
 function init() {}
 
 function buildPrefsWidget()
@@ -55,7 +65,7 @@ function buildPrefsWidget()
     let box_panel = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, border_width: 10 });
     for (i in PANEL_WIDGETS) {
         let widget_method = PANEL_WIDGETS[i]['type'];
-        let widget = new widgets()[widget_method](PANEL_WIDGETS[i]['args']);
+        let widget = new Widgets()[widget_method](PANEL_WIDGETS[i]['args']);
         box_panel.pack_start(widget, false, false, 5);
     }
 
@@ -63,7 +73,7 @@ function buildPrefsWidget()
     let box_items = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, border_width: 10 });
     for (i in MENU_WIDGETS) {
         let widget_method = MENU_WIDGETS[i]['type'];
-        let widget = new widgets()[widget_method](MENU_WIDGETS[i]['args']);
+        let widget = new Widgets()[widget_method](MENU_WIDGETS[i]['args']);
         box_items.pack_start(widget, false, false, 5);
     }
 
@@ -71,14 +81,14 @@ function buildPrefsWidget()
     let tabs = new Gtk.Notebook();
     tabs.set_scrollable(true);
     tabs.set_size_request(100, 100);
-    tabs.append_page(box_panel, new Gtk.Label({ label: "Global" }));
-    tabs.append_page(box_items, new Gtk.Label({ label: "Menu items" }));
+    tabs.append_page(box_panel, new Gtk.Label({ label: _("Global") }));
+    tabs.append_page(box_items, new Gtk.Label({ label: _("Menu items") }));
     frame.pack_start(tabs, false, false, 0);
 
     // Buttons box
     let box_buttons = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, border_width: 0 });
 
-    let button_default = new Gtk.Button({ label: "Restore default values" });
+    let button_default = new Gtk.Button({ label: _("Restore default values") });
     let button_image = new Gtk.Image();
     button_image.set_from_stock(Gtk.STOCK_REFRESH, 3);
     button_default.set_image(button_image);
@@ -93,21 +103,21 @@ function buildPrefsWidget()
 
 
 
-function widgets() {}
+function Widgets() {}
 
-widgets.prototype = {
+Widgets.prototype = {
 
     switch: function(args)
     {
         if (Object.keys(args).length != 2 || (args['key'] == undefined || args['label'] == undefined)) {
-            throw new Error("Incorrect arguments in widgets().switch() method: needs key and label.");
+            throw new Error("Incorrect arguments in Widgets().switch() method: needs key and label.");
         }
         
         let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
         let label = new Gtk.Label({ label: args['label'], xalign: 0 });
-        let widget = new Gtk.Switch({ active: SETTINGS.get_boolean(args['key']) });
+        let widget = new Gtk.Switch({ active: settings.get_boolean(args['key']) });
         widget.connect('notify::active', function(switch_widget) {
-            SETTINGS.set_boolean(args['key'], switch_widget.active);
+            settings.set_boolean(args['key'], switch_widget.active);
         });
 /*
         if (settings_bool[setting].help) {
@@ -123,15 +133,15 @@ widgets.prototype = {
     entry: function(args)
     {
         if (Object.keys(args).length != 2 || (args['key'] == undefined || args['label'] == undefined)) {
-            throw new Error("Incorrect arguments in widgets().entry() method: needs key and label.");
+            throw new Error("Incorrect arguments in Widgets().entry() method: needs key and label.");
         }
         
         let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
         let label = new Gtk.Label({ label: args['label'], xalign: 0 });
         let widget = new Gtk.Entry({ hexpand: true });
-        widget.set_text(SETTINGS.get_string(args['key']));
+        widget.set_text(settings.get_string(args['key']));
         widget.connect('changed', function(entry_widget) {
-            SETTINGS.set_string(args['key'], entry_widget.get_text());
+            settings.set_string(args['key'], entry_widget.get_text());
         });
         box.pack_start(label, true, true, 0);
         box.add(widget);
@@ -141,17 +151,17 @@ widgets.prototype = {
     slider: function(args)
     {
         if (Object.keys(args).length != 6 || (args['key'] == undefined || args['label'] == undefined || args['min'] == undefined || args['max'] == undefined || args['step'] == undefined || args['default'] == undefined)) {
-            throw new Error("Incorrect arguments in widgets().slider() method: needs key, label, min, max, step, default.");
+            throw new Error("Incorrect arguments in Widgets().slider() method: needs key, label, min, max, step, default.");
         }
         
         let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
         let label = new Gtk.Label({ label: args['label'], xalign: 0 });
         let widget = new Gtk.HScale.new_with_range(args['min'], args['max'], args['step']);
-        widget.set_value(SETTINGS.get_int(args['key']));
+        widget.set_value(settings.get_int(args['key']));
         //widget.add_mark(args['default'], Gtk.PositionType.BOTTOM, String(args['default']));  
         widget.set_size_request(200, -1);
         widget.connect('value_changed', function(slider_widget) {
-            SETTINGS.set_int(args['key'], slider_widget.get_value());
+            settings.set_int(args['key'], slider_widget.get_value());
         });
         box.pack_start(label, true, true, 0);
         box.add(widget);
@@ -161,7 +171,7 @@ widgets.prototype = {
     combo: function(args)
     {
         if (Object.keys(args).length != 3 || (args['key'] == undefined || args['label'] == undefined || args['values'] == undefined)) {
-            throw new Error("Incorrect arguments in widgets().entry() method: needs key, label and values.");
+            throw new Error("Incorrect arguments in Widgets().entry() method: needs key, label and values.");
         }
         
         let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
@@ -170,9 +180,9 @@ widgets.prototype = {
         for (command in args['values']) {
             widget.append(command, args['values'][command]);
         }
-        widget.set_active_id(SETTINGS.get_string(args['key']));
+        widget.set_active_id(settings.get_string(args['key']));
         widget.connect('changed', function(combo_widget) {
-            SETTINGS.set_string(args['key'], combo_widget.get_active_id());
+            settings.set_string(args['key'], combo_widget.get_active_id());
         });
         box.pack_start(label, true, true, 0);
         box.add(widget);
