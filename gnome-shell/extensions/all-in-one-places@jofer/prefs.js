@@ -11,7 +11,6 @@
 
 
 const Gtk = imports.gi.Gtk;
-const Lang = imports.lang;
 const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 const Extension = imports.misc.extensionUtils.getCurrentExtension();
@@ -22,31 +21,31 @@ const Lib = Extension.imports.lib;
 const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
 const PANEL_WIDGETS = [
-    {'type': 'switch', 'args': { 'key': 'left-panel-menu', 'label': _("Show icon on the left side of the panel") }},
-    {'type': 'switch', 'args': { 'key': 'show-panel-icon', 'label': _("Show panel icon") }},
-    {'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': _("Panel icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
-    {'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
-    {'type': 'entry', 'args': { 'key': 'panel-text', 'label': _("Panel text") }},
-    {'type': 'combo', 'args': { 'key': 'file-manager', 'label': _("File manager"), 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
-    {'type': 'entry', 'args': { 'key': 'connect-command', 'label': _("Application for the  \"Connect to...\" item") }},
-    {'type': 'entry', 'args': { 'key': 'search-command', 'label': _("Application for the \"Search\" item") }}
+    { 'type': 'switch', 'args': { 'key': 'left-panel-menu', 'label': _("Show icon on the left side of the panel") }},
+    { 'type': 'switch', 'args': { 'key': 'show-panel-icon', 'label': _("Show panel icon") }},
+    { 'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': _("Panel icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
+    { 'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
+    { 'type': 'entry', 'args': { 'key': 'panel-text', 'label': _("Panel text") }},
+    { 'type': 'combo', 'args': { 'key': 'file-manager', 'label': _("File manager"), 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
+    { 'type': 'entry', 'args': { 'key': 'connect-command', 'label': _("Application for the  \"Connect to...\" item") }},
+    { 'type': 'entry', 'args': { 'key': 'search-command', 'label': _("Application for the \"Search\" item") }}
 ]
 
 let MENU_WIDGETS = [
-    {'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
-    {'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
-    {'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide empty trash item") }},
-    {'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
-    {'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
-    {'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
-    {'type': 'switch', 'args': { 'key': 'show-devices-section', 'label': _("Show devices section") }},
-    {'type': 'switch', 'args': { 'key': 'collapse-devices-section', 'label': _("Drop-down style devices section") }},
-    {'type': 'switch', 'args': { 'key': 'show-network-section', 'label': _("Show network section") }},
-    {'type': 'switch', 'args': { 'key': 'collapse-network-section', 'label': _("Drop-down style network section") }},
-    {'type': 'switch', 'args': { 'key': 'show-search-item', 'label': _("Show search item") }},
-    {'type': 'switch', 'args': { 'key': 'show-documents-section', 'label': _("Show recent documents section") }},
-    {'type': 'slider', 'args': { 'key': 'max-documents-documents', 'label': _("Maximum number of recent documents"), 'min': 5, 'max': 25, 'step': 1, 'default': 10 }},
-    {'type': 'slider', 'args': { 'key': 'item-icon-size', 'label': _("Menu item icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 22 }},
+    { 'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
+    { 'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
+    { 'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide empty trash item") }},
+    { 'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
+    { 'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
+    { 'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
+    { 'type': 'switch', 'args': { 'key': 'show-devices-section', 'label': _("Show devices section") }},
+    { 'type': 'switch', 'args': { 'key': 'collapse-devices-section', 'label': _("Drop-down style devices section") }},
+    { 'type': 'switch', 'args': { 'key': 'show-network-section', 'label': _("Show network section") }},
+    { 'type': 'switch', 'args': { 'key': 'collapse-network-section', 'label': _("Drop-down style network section") }},
+    { 'type': 'switch', 'args': { 'key': 'show-search-item', 'label': _("Show search item") }},
+    { 'type': 'switch', 'args': { 'key': 'show-documents-section', 'label': _("Show recent documents section") }},
+    { 'type': 'slider', 'args': { 'key': 'max-documents-documents', 'label': _("Maximum number of recent documents"), 'min': 5, 'max': 25, 'step': 1, 'default': 10 }},
+    { 'type': 'slider', 'args': { 'key': 'item-icon-size', 'label': _("Menu item icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 22 }},
 ]
 
 
@@ -84,18 +83,6 @@ function buildPrefsWidget()
     tabs.append_page(box_panel, new Gtk.Label({ label: _("Global") }));
     tabs.append_page(box_items, new Gtk.Label({ label: _("Menu items") }));
     frame.pack_start(tabs, false, false, 0);
-
-    // Buttons box
-    let box_buttons = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, border_width: 0 });
-
-    let button_default = new Gtk.Button({ label: _("Restore default values") });
-    let button_image = new Gtk.Image();
-    button_image.set_from_stock(Gtk.STOCK_REFRESH, 3);
-    button_default.set_image(button_image);
-    //button_default.connect('clicked', restoreDefaultValues());
-    box_buttons.pack_end(button_default, false, false, 0);
-    
-    frame.pack_end(box_buttons, false, false, 0);
 
     frame.show_all();
     return frame;

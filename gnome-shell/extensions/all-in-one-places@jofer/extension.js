@@ -50,7 +50,6 @@ const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
 
 
 
-
 /**
  * Default menu item
  */
@@ -222,7 +221,6 @@ TrashMenuItem.prototype =
     }
 
 };
-
 
 
 
