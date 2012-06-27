@@ -26,6 +26,11 @@
             <summary>Panel text</summary>
             <description/>
         </key>
+        <key name="show-settings-menu" type="b">
+            <default>true</default>
+            <summary>Show settings menu</summary>
+            <description/>
+        </key>
         <key name="file-manager" type="s">
             <default>'nautilus'</default>
             <summary>The used file system manager</summary>

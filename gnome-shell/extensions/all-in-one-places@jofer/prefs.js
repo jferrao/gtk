@@ -26,6 +26,7 @@ const PANEL_WIDGETS = [
     { 'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': _("Panel icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
     { 'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
     { 'type': 'entry', 'args': { 'key': 'panel-text', 'label': _("Panel text") }},
+    { 'type': 'switch', 'args': { 'key': 'show-settings-menu', 'label': _("Show settings menu") }},    
     { 'type': 'combo', 'args': { 'key': 'file-manager', 'label': _("File manager"), 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
     { 'type': 'entry', 'args': { 'key': 'connect-command', 'label': _("Application for the  \"Connect to...\" item") }},
     { 'type': 'entry', 'args': { 'key': 'search-command', 'label': _("Application for the \"Search\" item") }}

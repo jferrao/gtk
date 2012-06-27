@@ -296,11 +296,15 @@ AllInOnePlaces.prototype =
 
     _onButtonPress: function(actor, event)
     {
-        let button = event.get_button();
-        if (button == 1) {
+        if (settings.get_boolean('show-settings-menu')) {
+            let button = event.get_button();
+            if (button == 1) {
+                this._displayMenu();
+            } else if (button == 3) {
+                this._displaySettingsMenu();
+            }
+        } else {
             this._displayMenu();
-        } else if (button == 3) {
-            this._displaySettingsMenu();
         }
         return PanelMenu.Button.prototype._onButtonPress.call(this, actor, event);
     },
