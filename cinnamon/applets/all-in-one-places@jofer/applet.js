@@ -31,6 +31,24 @@ const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const FileUtils = imports.misc.fileUtils;
 
+const MyApplet = imports.ui.appletManager.applets['all-in-one-places@jofer'];
+const Lib = MyApplet.lib;
+
+
+
+const EXTENSION_UUID = "all-in-one-places@jofer"
+const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
+const APPLET_DIR = imports.ui.appletManager.appletMeta["all-in-one-places@jofer"].path;
+
+
+
+let settings;
+
+
+
+
+
+
 
 
 
@@ -65,6 +83,15 @@ const DEFAULT_CONFIG = {
 
 const CONFIG_FILE    = 'applets/all-in-one-places@jofer/config.json';
 
+
+
+
+
+
+
+
+
+
 /**
  * Messages for the confirmation dialog boxes.
  */
@@ -95,12 +122,11 @@ MenuItem.prototype =
     {
         PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
             
-        this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
-
-        this.box.add(icon);
+        let box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
+        box.add(icon);
         let label = new St.Label({ text: text });
-        this.box.add(label);
-        this.addActor(this.box);
+        box.add(label);
+        this.addActor(box);
     }
 };
 
@@ -114,28 +140,24 @@ function DeviceMenuItem()
 
 DeviceMenuItem.prototype =
 {
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    __proto__: MenuItem.prototype,
     
     _init: function(device, icon, text, params)
     {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-        
+        MenuItem.prototype._init.call(this, icon, text, params);
         this.device = device;
-        
-        this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
-
-        this.box.add(icon);
-        let label = new St.Label({ text: text });
-        this.box.add(label);
-        this.addActor(this.box);
-        
-        let ejectIcon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.ejectButton = new St.Button({ child: ejectIcon, tooltip_text: _("Eject") });
-        this.ejectButton.connect('clicked', Lang.bind(this, this._ejectDevice));
-        this.addActor(this.ejectButton);
+        this._addEjectButton();
     },
     
-    _ejectDevice: function()
+    _addEjectButton: function()
+    {
+        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        let eject_button = new St.Button({ child: eject_icon });
+        eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
+        this.addActor(eject_button);
+    },
+        
+    _confirmEjectDevice: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doEjectDevice), EJECT_DEVICE_LABEL, EJECT_DEVICE_MESSAGE, _("Cancel"), _("OK")).open();
     },
@@ -176,45 +198,46 @@ TrashMenuItem.prototype =
         this._checkTrashStatus();
 
         this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this._trashConn = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
+        this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
     },
 
     destroy: function()
     {
-        this.monitor.disconnect(this._trashConn);
-        this.parent();
+        this.monitor.disconnect(this._trashChanged);
+        this.actor.destroy();
+        //this.parent();
     },
 
-    _trashItemBase: function()
+    _showTrashItem: function(icon)
     {
         this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });        
-        this.box.add(this.icon);
-        this.label = new St.Label({ text: this.text });
-        this.box.add(this.label);
+        this.box.add(icon);
+        let label = new St.Label({ text: this.text });
+        this.box.add(label);
         this.addActor(this.box);
     },
     
-    _trashItemEmpty: function()
+    _showTrashItemEmpty: function()
     {
-        this.icon = new St.Icon({icon_name: "trashcan_empty", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase();
+        let icon = new St.Icon({icon_name: "trashcan_empty", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this._showTrashItem(icon);
     },
     
-    _trashItemFull: function()
+    _showTrashItemFull: function()
     {
-        this.icon = new St.Icon({icon_name: "trashcan_full", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this._trashItemBase();
+        let icon = new St.Icon({icon_name: "trashcan_full", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        this._showTrashItem(icon);
         
-        let emptyIcon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.emptyButton = new St.Button({ child: emptyIcon, tooltip_text: _("Empty Trash")  });
-        this.emptyButton.connect('clicked', Lang.bind(this, this._emptyTrash));
-        this.addActor(this.emptyButton);
+        let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
+        this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+        this.addActor(this.empty_button);
     },
     
     _clearTrashItem: function()
     {
         if (this.box) this.removeActor(this.box);
-        if (this.emptyButton) this.removeActor(this.emptyButton);
+        if (this.empty_button) this.removeActor(this.empty_button);
     },
     
     _checkTrashStatus: function()
@@ -222,13 +245,13 @@ TrashMenuItem.prototype =
         let children = this.trash_file.enumerate_children('*', 0, null, null);
         if (children.next_file(null, null) == null) {
             this._clearTrashItem();
-            this._trashItemEmpty();
+            this._showTrashItemEmpty();
             if (config.AUTO_HIDE_TRASH) {
                 this.actor.visible = false;
             }
         } else {
             this._clearTrashItem();
-            this._trashItemFull();
+            this._showTrashItemFull();
             if (config.AUTO_HIDE_TRASH) {
                 this.actor.show();
                 this.actor.visible = true;
@@ -236,7 +259,7 @@ TrashMenuItem.prototype =
         }
     },
     
-    _emptyTrash: function()
+    _confirmEmptyTrash: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doEmptyTrash), EMPTY_TRASH_LABEL, EMPTY_TRASH_MESSAGE, _("Cancel"), _("Empty Trash")).open();
     },
@@ -273,7 +296,7 @@ ConfirmationDialog.prototype =
 {
     __proto__: ModalDialog.ModalDialog.prototype,
 
-    _init: function(doMethod, dialogLabel, dialogMessage, cancelButtonLabel, doButtonLabel)
+    _init: function(callback, label, message, cancel_button_label, callback_button_layer)
     {
         ModalDialog.ModalDialog.prototype._init.call(this, { styleClass: null });
 
@@ -283,25 +306,25 @@ ConfirmationDialog.prototype =
         let messageBox = new St.BoxLayout({ style_class: 'polkit-dialog-message-layout', vertical: true });
         mainContentBox.add(messageBox, { y_align: St.Align.START });
 
-        this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline', text: dialogLabel });
+        this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline', text: label });
         messageBox.add(this._subjectLabel, { y_fill: false, y_align: St.Align.START });
 
-        this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description', text: dialogMessage });
+        this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description', text: message });
         messageBox.add(this._descriptionLabel, { y_fill: true, y_align: St.Align.START });
         
         this.setButtons([
             {
-                label: cancelButtonLabel,
+                label: cancel_button_label,
                 action: Lang.bind(this, function() {
                     this.close();
                 }),
                 key: Clutter.Escape
             },
             {
-                label: doButtonLabel,
+                label: callback_button_layer,
                 action: Lang.bind(this, function() {
                     this.close();
-                    doMethod();
+                    callback();
                 })
             }
         ]);
@@ -313,12 +336,12 @@ ConfirmationDialog.prototype =
 /**
  * The applet itself
  */
-function MyApplet(orientation)
+function AllInOnePlaces(orientation)
 {
     this._init(orientation);
 }
 
-MyApplet.prototype =
+AllInOnePlaces.prototype =
 {
     __proto__: Applet.TextIconApplet.prototype,
 
@@ -371,6 +394,14 @@ MyApplet.prototype =
     {
         this.menu.toggle();        
     },
+    
+    _displayOnPanel: function()
+    {
+        
+        
+        
+        
+    },    
 
     _display : function()
     {
@@ -783,6 +814,13 @@ launch.prototype =
  */
 function main(metadata, orientation)
 {
-    let myApplet = new MyApplet(orientation);
-    return myApplet;
+    // Load settings
+    //try {
+        settings = Lib.getSettings(SCHEMA_NAME, APPLET_DIR);
+    //} catch(e) {
+    //    throw new Error(_("Unable to load settings."));
+    //}
+    
+    let all_in_one_places_applet = new AllInOnePlaces(orientation);
+    return all_in_one_places_applet;
 }
