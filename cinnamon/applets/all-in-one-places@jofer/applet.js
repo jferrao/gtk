@@ -31,13 +31,8 @@ const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const FileUtils = imports.misc.fileUtils;
 
-const MyApplet = imports.ui.appletManager.applets['all-in-one-places@jofer'];
-const Lib = MyApplet.lib;
-
-
-
 const EXTENSION_UUID = "all-in-one-places@jofer"
-const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
+const SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces";
 const APPLET_DIR = imports.ui.appletManager.appletMeta["all-in-one-places@jofer"].path;
 
 
@@ -56,7 +51,7 @@ let settings;
 /**
  * Global to store configuration values.
  */
-config = null;
+let config;
 
 /**
  * Default configuration options in case something goes wrong with the config.json file.
@@ -336,12 +331,12 @@ ConfirmationDialog.prototype =
 /**
  * The applet itself
  */
-function AllInOnePlaces(orientation)
+function MyApplet(orientation)
 {
     this._init(orientation);
 }
 
-AllInOnePlaces.prototype =
+MyApplet.prototype =
 {
     __proto__: Applet.TextIconApplet.prototype,
 
@@ -352,28 +347,9 @@ AllInOnePlaces.prototype =
         this.getConfig();
 
         try {
-            if (!config.SHOW_PANEL_ICON && !config.SHOW_PANEL_TEXT) {
-                config.SHOW_PANEL_ICON = true;
-            }
-            
-            if (config.SHOW_PANEL_ICON) {
-                if (config.USE_FULL_COLOR_ICON) {
-                    this.set_applet_icon_name('user-home');
-                } else {
-                    this.set_applet_icon_symbolic_name('folder');
-                }
-            }
-            
-            if (config.SHOW_PANEL_TEXT) {
-                let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
-                if (config.SHOW_PANEL_ICON) {
-                    this.set_applet_label(" " + text);
-                } else {
-                    this.set_applet_label(text);
-                }
-            } else {
-                this.set_applet_tooltip(_("Places"));
-            }
+            // Monitor settings changes and refresh menu on change
+            this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
+            this._displayOnPanel();
 
             this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menu = new Applet.AppletPopupMenu(this, orientation);
@@ -383,7 +359,7 @@ AllInOnePlaces.prototype =
             let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, Lang.bind(this, this._launchSettings));
             this._applet_context_menu.addMenuItem(settings_menu_item);
 
-            this._display();
+            this._displayMenu();
         }
         catch (e) {
             global.logError(e);
@@ -397,55 +373,110 @@ AllInOnePlaces.prototype =
     
     _displayOnPanel: function()
     {
+        let show_panel_icon;
         
+        // Do not allow both icon and text to be false
+        if (!settings.get_boolean('show-panel-icon') && !settings.get_boolean('show-panel-text')) {
+            show_panel_icon = true;
+        } else {
+            show_panel_icon = settings.get_boolean('show-panel-icon');
+        }
         
-        
-        
-    },    
+        /*
+        // Clean up all actor's children
+        this.actor.get_children().forEach(function(c) {
+            c.destroy()
+        });
+        */
 
-    _display : function()
+        if (show_panel_icon) {
+            if (settings.get_boolean('full-color-panel-icon')) {
+                this.set_applet_icon_name('user-home');
+            } else {
+                this.set_applet_icon_symbolic_name('folder');
+            }
+        }
+
+        if (settings.get_boolean('show-panel-text')) {
+            let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
+            if (show_panel_icon) {
+                this.set_applet_label(" " + text);
+            } else {
+                this.set_applet_label(text);
+            }
+        } else {
+            this.set_applet_tooltip(_("Places"));
+        }
+    },
+
+    _displayMenu : function()
     {
-        
-        // Show default places section - not to be used on this version.
-        //this._createDefaultPlaces();
-        
-        // Show home section
-        this._createHome();
+        // Clean up all menu items
+        this.menu.removeAll();
 
-        // Show desktop section
-        if (config.SHOW_DESKTOP) {
-            this._createDesktop();
+        // Show home item
+        this.menu.addMenuItem(this._createStandardItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
+
+        // Show desktop item
+        if (settings.get_boolean('show-desktop-item')) {
+            //let desktop_folder = FileUtils.getUserDesktopDir()
+            let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
+            this.menu.addMenuItem(this._createStandardItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\""));
         }
 
         // Show trash item
-        this._createTrash();
+        if (settings.get_boolean('show-trash-item')) {
+            this.menu.addMenuItem(new TrashMenuItem(_("Trash")));
+        }
 
         // Show bookmarks section
-        if (config.SHOW_BOOKMARKS) {
+        if (settings.get_boolean('show-bookmarks-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (config.COLLAPSE_BOOKMARKS) {
-                this._bookmarksSection = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
-                this.menu.addMenuItem(this._bookmarksSection);
-                this._createBookmarks();
+            if (settings.get_boolean('collapse-bookmarks-section')) {
+                this._bookmarks_section = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
             } else {
-                this._bookmarksSection = new PopupMenu.PopupMenuSection();
-                this._createBookmarks();
-                this.menu.addMenuItem(this._bookmarksSection);
+                this._bookmarks_section = new PopupMenu.PopupMenuSection();
             }
-            
-            // Monitor bookmarks changes - still working on this one ...
-            //this._addBookmarksWatch();
-            this._bookmarksConn = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._redisplayBookmarks));
-        }   
-        
-        // Show computer item
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._createComputer();
+            // Monitor bookmarks changes
+            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarks));
 
-        // Show File System item
-        if (config.SHOW_FILE_SYSTEM) {
-            this._createFileSystem();
+            this._createBookmarksSection();
+            this.menu.addMenuItem(this._bookmarks_section);
         }
+        
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        // Show computer item
+        this.menu.addMenuItem(this._createStandardItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
+
+        // Show file system item
+        if (settings.get_boolean('show-filesystem-item')) {
+            this.menu.addMenuItem(this._createStandardItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /"));
+        }
+
+        // Show devices section
+        if (settings.get_boolean('show-devices-section')) {
+            if (settings.get_boolean('collapse-devices-section')) {
+                this._devices_section = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
+            } else {
+                this._devices_section = new PopupMenu.PopupMenuSection();
+            }
+            // Monitor mounts changes
+            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevices));
+            
+            this._createDevicesSection();
+            this.menu.addMenuItem(this._devices_section);
+        }
+
+
+
+
+
+
+
+
+
+
+
 
         // Show devices section
         if (config.SHOW_DEVICES) {
@@ -511,127 +542,45 @@ AllInOnePlaces.prototype =
     },
 
     /**
-     * Build computer section
-     */
-    _createComputer: function()
+     * Create a standard item on the main menu
+     */ 
+    _createStandardItem: function(icon, label, launcher)
     {
-        let icon = new St.Icon({icon_name: 'computer', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.computerItem = new MenuItem(icon, _("Computer"));
-        this.computerItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus computer://");
-        });
-        this.menu.addMenuItem(this.computerItem);
-    },
-
-    /**
-     * Build file system section
-     */
-    _createFileSystem: function()
-    {
-        let icon = new St.Icon({icon_name: 'drive-harddisk', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.filesystemItem = new MenuItem(icon, _("File System"));
-        this.filesystemItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus /");
-        });
-        this.menu.addMenuItem(this.filesystemItem);
-    },
-
-    /**
-     * Build home section
-     */
-    _createHome: function()
-    {
-        let icon = new St.Icon({icon_name: 'user-home', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.homeItem = new MenuItem(icon, _("Home Folder"));
-        this.homeItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus");
-        });
-        this.menu.addMenuItem(this.homeItem);
-    },
-
-    /**
-     * Build desktop section
-     */
-    _createDesktop: function()
-    {
-        let icon = new St.Icon({icon_name: 'user-desktop', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.desktopItem = new MenuItem(icon, _("Desktop"));
-        this.desktopItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus \"" + FileUtils.getUserDesktopDir().replace(" ","\ ") + "\"");
-        });
-        this.menu.addMenuItem(this.desktopItem);
-    },
-
-    /**
-     * Build default places section
-     */
-    _createDefaultPlaces : function()
-    {
-        this.defaultPlaces = Main.placesManager.getDefaultPlaces();
-        for (let placeid = 0; placeid < this.defaultPlaces.length; placeid++) {
-            let icon = this.defaultPlaces[placeid].iconFactory(config.ICON_SIZE);
-            let defaultItem = new MenuItem(icon, _(this.defaultPlaces[placeid].name));
-            defaultItem.place = this.defaultPlaces[placeid];
-            
-            defaultItem.connect('activate', function(actor, event) {
-                actor.place.launch();
+        let icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
+        let item = new MenuItem(icon, label);
+        if (launcher != undefined) {
+            item.connect('activate', function(actor, event) {
+                new launch().command(launcher);
             });
-            this.menu.addMenuItem(defaultItem);
         }
-    },
-
-    /**
-     * Build trash section
-     */
-    _createTrash: function()
-    {
-        this.trashItem = new TrashMenuItem(_("Trash"));
-        this.menu.addMenuItem(this.trashItem);
+        return item;
     },
 
     /**
      * Build bookmarks section
      */
-    _createBookmarks : function()
+    _createBookmarksSection: function()
     {
         this.bookmarks = Main.placesManager.getBookmarks();
 
-        sectionMenu = (this._bookmarksSection.menu) ? this._bookmarksSection.menu : this._bookmarksSection;
-
         for (let bookmarkid = 0; bookmarkid < this.bookmarks.length; bookmarkid++) {
-            let icon = this.bookmarks[bookmarkid].iconFactory(config.ICON_SIZE);
-            let bookmarkItem = new MenuItem(icon, this.bookmarks[bookmarkid].name);
-            bookmarkItem.place = this.bookmarks[bookmarkid];
+            let icon = this.bookmarks[bookmarkid].iconFactory(settings.get_int('item-icon-size'));
+            let bookmark_item = new MenuItem(icon, this.bookmarks[bookmarkid].name);
+            bookmark_item.place = this.bookmarks[bookmarkid];
             
-            bookmarkItem.connect('activate', function(actor, event) {
+            bookmark_item.connect('activate', function(actor, event) {
                 actor.place.launch();
             });
-            sectionMenu.addMenuItem(bookmarkItem);
+            if (this._bookmarks_section.menu) { this._bookmarks_section.menu.addMenuItem(bookmark_item) } else { this._bookmarks_section.addMenuItem(bookmark_item) }
         }
     },
     
-    /**
-     * Method still under development - do not use ...
-     */
-    _addBookmarksWatch: function()
+    _refreshBookmarks: function()
     {
-        this.bookmarks_file = Gio.file_new_for_path("~/.gtk-bookmarks");
-        this.monitor = this.bookmarks_file.monitor_file(0, null, null);
-        this.monitor.connect('changed', Lang.bind(this, this._redisplayBookmarks));
+        if (this._bookmarks_section.menu) { this._bookmarks_section.menu.removeAll() } else { this._bookmarks_section.removeAll() }
+        this._createBookmarksSection();
     },
     
-    _clearBookmarks : function()
-    {
-        sectionMenu = (this._bookmarksSection.menu) ?  this._bookmarksSection.menu : this._bookmarksSection;
-        this._bookmarksSection.removeAll();
-    },
-
-    _redisplayBookmarks: function()
-    {
-        this._clearBookmarks();
-        this._createBookmarks();
-    },
-
     /**
      * Build devices section
      */
@@ -810,17 +759,34 @@ launch.prototype =
 
 
 /**
+ * Load settings 
+ */
+function getSettings(schema_name, applet_dir)
+{
+    let schema_dir = applet_dir + "/schemas"
+
+    // Check if schemas are available in .local or if it's installed system-wide
+    if (GLib.file_test(schema_dir + '/gschemas.compiled', GLib.FileTest.EXISTS)) {
+        schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
+        let schema = schema_source.lookup(SCHEMA_NAME, false);
+        return new Gio.Settings({ settings_schema: schema });
+    } else {
+        if (Gio.Settings.list_schemas().indexOf(schema_name) == -1)
+            throw "Schema \"%s\" not found.".format(schema_name);
+        return new Gio.Settings({ schema: schema_name });
+    }
+
+}
+
+
+
+/**
  * Go!!!!!!!
  */
 function main(metadata, orientation)
 {
-    // Load settings
-    //try {
-        settings = Lib.getSettings(SCHEMA_NAME, APPLET_DIR);
-    //} catch(e) {
-    //    throw new Error(_("Unable to load settings."));
-    //}
-    
-    let all_in_one_places_applet = new AllInOnePlaces(orientation);
+    settings = getSettings(SCHEMA_NAME, APPLET_DIR);
+        
+    let all_in_one_places_applet = new MyApplet(orientation);
     return all_in_one_places_applet;
 }

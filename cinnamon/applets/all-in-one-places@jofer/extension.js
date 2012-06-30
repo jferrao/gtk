@@ -389,7 +389,7 @@ AllInOnePlaces.prototype =
 
             this._createBookmarksSection();
             this.menu.addMenuItem(this._bookmarks_section);
-        }   
+        }
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         // Show computer item
