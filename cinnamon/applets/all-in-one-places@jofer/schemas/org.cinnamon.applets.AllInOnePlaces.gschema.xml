@@ -11,11 +11,6 @@
             <summary>Show the panel icon in full color</summary>
             <description/>
         </key>
-        <key name="panel-icon-size" type="i">
-            <default>14</default>
-            <summary>Panel icon size</summary>
-            <description/>
-        </key>
         <key name="show-panel-text" type="b">
             <default>false</default>
             <summary>Show panel text</summary>

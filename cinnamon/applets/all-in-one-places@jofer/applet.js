@@ -4,7 +4,7 @@
  * 
  * 
  * @author jferrao <jferrao@ymail.com>
- * @version 1.3.1
+ * @version 2.0
  * 
  */
 
@@ -35,55 +35,7 @@ const EXTENSION_UUID = "all-in-one-places@jofer"
 const SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces";
 const APPLET_DIR = imports.ui.appletManager.appletMeta["all-in-one-places@jofer"].path;
 
-
-
 let settings;
-
-
-
-
-
-
-
-
-
-
-/**
- * Global to store configuration values.
- */
-let config;
-
-/**
- * Default configuration options in case something goes wrong with the config.json file.
- */
-const DEFAULT_CONFIG = {
-    "SHOW_PANEL_ICON": true,
-    "USE_FULL_COLOR_ICON": false,
-    "SHOW_PANEL_TEXT": false,
-    "PANEL_TEXT": null,
-    "SHOW_DESKTOP": true,
-    "AUTO_HIDE_TRASH": false,
-    "SHOW_BOOKMARKS": true,
-    "COLLAPSE_BOOKMARKS": false,
-    "SHOW_FILE_SYSTEM": false,
-    "SHOW_DEVICES": true,
-    "COLLAPSE_DEVICES": false,
-    "SHOW_NETWORK": true,
-    "COLLAPSE_NETWORK": false,
-    "SHOW_SEARCH": true,
-    "SHOW_RECENT_DOCUMENTS": true,
-    "ICON_SIZE": 22,
-    "RECENT_ITEMS": 10
-};
-
-const CONFIG_FILE    = 'applets/all-in-one-places@jofer/config.json';
-
-
-
-
-
-
-
 
 
 
@@ -96,8 +48,6 @@ const EJECT_DEVICE_LABEL    = _("Eject");
 const EJECT_DEVICE_MESSAGE  = _("Are you sure you want to eject this device ?") + "\n";
 const CLEAR_RECENT_LABEL    = _("Recent documents");
 const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
-
-
 
 
 
@@ -214,13 +164,13 @@ TrashMenuItem.prototype =
     
     _showTrashItemEmpty: function()
     {
-        let icon = new St.Icon({icon_name: "trashcan_empty", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: "trashcan_empty", icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._showTrashItem(icon);
     },
     
     _showTrashItemFull: function()
     {
-        let icon = new St.Icon({icon_name: "trashcan_full", icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
+        let icon = new St.Icon({icon_name: "trashcan_full", icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
         this._showTrashItem(icon);
         
         let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
@@ -241,13 +191,13 @@ TrashMenuItem.prototype =
         if (children.next_file(null, null) == null) {
             this._clearTrashItem();
             this._showTrashItemEmpty();
-            if (config.AUTO_HIDE_TRASH) {
+            if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.visible = false;
             }
         } else {
             this._clearTrashItem();
             this._showTrashItemFull();
-            if (config.AUTO_HIDE_TRASH) {
+            if (settings.get_boolean('hide-empty-trash-item')) {
                 this.actor.show();
                 this.actor.visible = true;
             }
@@ -344,22 +294,18 @@ MyApplet.prototype =
     {
         Applet.TextIconApplet.prototype._init.call(this, orientation);
 
-        this.getConfig();
-
         try {
-            // Monitor settings changes and refresh menu on change
-            this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
-            this._displayOnPanel();
-
             this.menuManager = new PopupMenu.PopupMenuManager(this);
             this.menu = new Applet.AppletPopupMenu(this, orientation);
             this.menuManager.addMenu(this.menu);
 
+            // Monitor settings changes and refresh menu on change
+            this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
+            this._displayOnPanel(orientation);
+            
             // Add edit settings context menu item
             let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, Lang.bind(this, this._launchSettings));
             this._applet_context_menu.addMenuItem(settings_menu_item);
-
-            this._displayMenu();
         }
         catch (e) {
             global.logError(e);
@@ -371,7 +317,7 @@ MyApplet.prototype =
         this.menu.toggle();        
     },
     
-    _displayOnPanel: function()
+    _displayOnPanel: function(orientation)
     {
         let show_panel_icon;
         
@@ -382,12 +328,11 @@ MyApplet.prototype =
             show_panel_icon = settings.get_boolean('show-panel-icon');
         }
         
-        /*
-        // Clean up all actor's children
-        this.actor.get_children().forEach(function(c) {
-            c.destroy()
-        });
-        */
+        // Reset applet values
+        this.set_applet_icon_name('');
+        this.set_applet_icon_symbolic_name('');
+        this.set_applet_label('');
+        this.set_applet_tooltip('');
 
         if (show_panel_icon) {
             if (settings.get_boolean('full-color-panel-icon')) {
@@ -398,7 +343,7 @@ MyApplet.prototype =
         }
 
         if (settings.get_boolean('show-panel-text')) {
-            let text = (config.PANEL_TEXT) ? config.PANEL_TEXT : _("Places");
+            let text = (settings.get_string('panel-text')) ? settings.get_string('panel-text') : _("Places");
             if (show_panel_icon) {
                 this.set_applet_label(" " + text);
             } else {
@@ -407,6 +352,8 @@ MyApplet.prototype =
         } else {
             this.set_applet_tooltip(_("Places"));
         }
+
+        this._displayMenu();        
     },
 
     _displayMenu : function()
@@ -467,78 +414,53 @@ MyApplet.prototype =
             this.menu.addMenuItem(this._devices_section);
         }
 
-
-
-
-
-
-
-
-
-
-
-
-        // Show devices section
-        if (config.SHOW_DEVICES) {
-            if (config.COLLAPSE_DEVICES) {
-                this._devicesSection = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
-                this.menu.addMenuItem(this._devicesSection);
-                this._createDevices();
-            } else {
-                this._devicesSection = new PopupMenu.PopupMenuSection();
-                this._createDevices();
-                this.menu.addMenuItem(this._devicesSection);
-            }
-            
-            // Monitor mounts changes
-            this._devicesConn = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._redisplayDevices));
-        }
-
         // Show network section
-        if (config.SHOW_NETWORK) {
+        if (settings.get_boolean('show-network-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-            if (config.COLLAPSE_NETWORK) {
-                this._networkSection = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
-                this.menu.addMenuItem(this._networkSection);
-                this._createNetwork();
+            if (settings.get_boolean('collapse-network-section')) {
+                this._network_section = new PopupMenu.PopupSubMenuMenuItem(_("Network"));
             } else {
-                this._networkSection = new PopupMenu.PopupMenuSection();
-                this._createNetwork();
-                this.menu.addMenuItem(this._networkSection);
+                this._network_section = new PopupMenu.PopupMenuSection();
             }
+            
+            let network_item = this._createStandardItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
+            if (this._network_section.menu) { this._network_section.menu.addMenuItem(network_item) } else { this._network_section.addMenuItem(network_item) }
+            let connect_item = this._createStandardItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
+            if (this._network_section.menu) { this._network_section.menu.addMenuItem(connect_item) } else { this._network_section.addMenuItem(connect_item) }
+            
+            this.menu.addMenuItem(this._network_section);
         }
 
-        if (config.SHOW_SEARCH || config.SHOW_RECENT_DOCUMENTS) {
+        if (settings.get_boolean('show-search-item') || settings.get_boolean('show-documents-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-
             // Show search section
-            if (config.SHOW_SEARCH) {
-                this._createSearch();
+            if (settings.get_boolean('show-search-item')) {
+                this.menu.addMenuItem(this._createStandardItem('search', _("Search"), settings.get_string('search-command')));
             }
-
             // Show recent documents section
-            if (config.SHOW_RECENT_DOCUMENTS) {
-                this.RecentManager = new Gtk.RecentManager();
-
-                this._recentSection = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
-                this.menu.addMenuItem(this._recentSection);
-                this._createRecent();
-            
-                // Monitor recent documents changes
-                this._recentConn = this.RecentManager.connect('changed', Lang.bind(this, this._redisplayRecent));
+            if (settings.get_boolean('show-documents-section')) {
+                this.recentManager = new Gtk.RecentManager();
+                this._recent_section = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
+                // Monitor recent documents changes 
+                this._recentChanged = this.recentManager.connect('changed', Lang.bind(this, this._refreshRecent));
+                
+                this._createRecentSection();
+                this.menu.addMenuItem(this._recent_section);
             }
         }
         
     },
 
-    destroy: function()
+    /**
+     * Disconnect signals
+     */
+    disconnect: function()
     {
         // Disconnecting signals
-        if (this._bookmarksConn) Main.placesManager.disconnect(this._bookmarksConn);
-        if (this._devicesConn) Main.placesManager.disconnect(this._devicesConn);
-        if (this._recentConn) this.RecentManager.disconnect(this._recentConn);
-
-        this.parent();
+        if (this._settingsChanged) settings.disconnect(this._settingsChanged);
+        if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
+        if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
+        if (this._recentChanged) this.recentManager.disconnect(this._recentChanged);
     },
 
     /**
@@ -584,156 +506,96 @@ MyApplet.prototype =
     /**
      * Build devices section
      */
-    _createDevices : function()
+    _createDevicesSection: function()
     {
         this.devices = Main.placesManager.getMounts();
-        
-        sectionMenu = (this._devicesSection.menu) ? this._devicesSection.menu : this._devicesSection;
-
         for (let devid = 0; devid < this.devices.length; devid++) {
-            let icon = this.devices[devid].iconFactory(config.ICON_SIZE);
-            let deviceItem = new DeviceMenuItem(this.devices[devid], icon, this.devices[devid].name);
-            sectionMenu.addMenuItem(deviceItem);
+            let icon = this.devices[devid].iconFactory(settings.get_int('item-icon-size'));
+            let device_item = new DeviceMenuItem(this.devices[devid], icon, this.devices[devid].name);
+            if (this._devices_section.menu) { this._devices_section.menu.addMenuItem(device_item) } else { this._devices_section.addMenuItem(device_item) }
         }
 
         if (this.devices.length == 0) {
-            this._devicesSection.actor.hide();
+            this._devices_section.actor.hide();
         } else {
-            this._devicesSection.actor.show();
+            this._devices_section.actor.show();
         }
     },
 
-    _clearDevices : function()
+    _refreshDevices: function()
     {
-        sectionMenu = (this._devicesSection.menu) ? this._devicesSection.menu : this._devicesSection;
-        sectionMenu.removeAll();
-    },
-
-    _redisplayDevices: function()
-    {
-        this._clearDevices();
-        this._createDevices();
-    },
-
-    /**
-     * Build network section
-     */
-    _createNetwork: function()
-    {
-        sectionMenu = (this._networkSection.menu) ? this._networkSection.menu : this._networkSection;
-        
-        let icon = new St.Icon({icon_name: 'network-workgroup', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.networkItem = new MenuItem(icon, _("Network"));
-        this.networkItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus network:///");
-        });
-        sectionMenu.addMenuItem(this.networkItem);
-        
-        let icon = new St.Icon({icon_name: 'gnome-globe', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.connectItem = new MenuItem(icon, _("Connect to..."));
-        this.connectItem.connect('activate', function(actor, event) {
-            new launch().command("nautilus-connect-server");
-        });        
-        sectionMenu.addMenuItem(this.connectItem);
-    },
-
-
-    /**
-     * Build search section
-     */
-    _createSearch: function()
-    {
-        let icon = new St.Icon({icon_name: 'search', icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-        this.searchItem = new MenuItem(icon, _("Search"));
-        this.menu.addMenuItem(this.searchItem);
-
-        this.searchItem.connect('activate', function(actor, event) {
-            new launch().command("gnome-search-tool");
-        });
+        if (this._devices_section.menu) { this._devices_section.menu.removeAll() } else { this._devices_section.removeAll() }
+        this._createDevicesSection();
     },
 
     /**
      * Build recent documents section
      */
-    _createRecent: function()
+    _createRecentSection: function()
     {
         let id = 0;
 
-        if (this.RecentManager.size > 0) {
-            let items = this.RecentManager.get_items();
-            while (id < config.RECENT_ITEMS && id < this.RecentManager.size) {
-                let icon =  new St.Icon({icon_name: items[id].get_mime_type().replace("\/","-"), icon_size: config.ICON_SIZE, icon_type: St.IconType.FULLCOLOR});
-                let recentItem = new MenuItem(icon, items[id].get_display_name());
-                this._recentSection.menu.addMenuItem(recentItem);
-
-                recentItem.connect('activate', Lang.bind(this, this._openRecentFile, items[id].get_uri()));
+        if (this.recentManager.size > 0) {
+            let items = this.recentManager.get_items();
+            while (id < settings.get_int('max-documents-documents') && id < this.recentManager.size) {
+                let recent_item = this._createStandardItem(items[id].get_mime_type().replace("\/","-"), items[id].get_display_name());
+                recent_item.connect('activate', Lang.bind(this, this._openRecentFile, items[id].get_uri()));
+                this._recent_section.menu.addMenuItem(recent_item);
                 id++;
             }
-
-            this._recentSection.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            
+            // Clear list item
+            this._recent_section.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             menuItem = new PopupMenu.PopupBaseMenuItem();
             let label = new St.Label({ text: _("Clear list") });
             menuItem.addActor(label, { align: St.Align.END });
             let icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
             menuItem.addActor(icon, { align: St.Align.MIDDLE });
-            menuItem.connect('activate', Lang.bind(this, this._clearRecent));
-            this._recentSection.menu.addMenuItem(menuItem);
+            menuItem.connect('activate', Lang.bind(this, this._confirmClearRecent));
+            this._recent_section.menu.addMenuItem(menuItem);
         }
 
-        if (this.RecentManager.size == 0) {
-            this._recentSection.actor.hide();
+        if (this.recentManager.size == 0) {
+            this._recent_section.actor.hide();
         } else {
-            this._recentSection.actor.show();
+            this._recent_section.actor.show();
         }
     },
 
-    _clearRecent: function()
+    _confirmClearRecent: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
     },
 
     _doClearRecent: function()
     {
-        this.RecentManager.purge_items();
+        this.recentManager.purge_items();
     },
 
-    _redisplayRecent: function()
+    _refreshRecent: function()
     {
-        this._recentSection.menu.removeAll();
-        if (this.RecentManager.size == 0) {
-            this._recentSection.actor.visible = false;
+        this._recent_section.menu.removeAll();
+        if (this.recentManager.size == 0) {
+            this._recent_section.actor.visible = false;
         } else {
-            this._recentSection.actor.show();
-            this._recentSection.actor.visible = true;
-            this._createRecent();
+            this._recent_section.actor.show();
+            this._recent_section.actor.visible = true;
+            this._createRecentSection();
         }
     },
 
-    _openRecentFile: function(a, b, c)
+    _openRecentFile: function(object, event, recent_file)
     {
-        new launch().file(c);
+        new launch().file(recent_file);
     },
     
     _launchSettings: function()
     {
-        let settingsFile = GLib.build_filenamev([global.userdatadir, "applets/all-in-one-places@jofer/settings.py"]); 
+        //let settingsFile = GLib.build_filenamev([global.userdatadir, "applets/all-in-one-places@jofer/settings.py"]); 
+        let settingsFile = APPLET_DIR + "/settings.py";
         new launch().command("python " + settingsFile);
     },
-    
-    /**
-     * Get configuration values from config.json file. 
-     */
-    getConfig: function()
-    {
-        let configFile = GLib.build_filenamev([global.userdatadir, CONFIG_FILE]);
-        try {
-            config = JSON.parse(Cinnamon.get_file_contents_utf8_sync(configFile));
-        } catch (e) {
-            // If something goes wrong with the configuration file we use the default configuration values.
-            config = DEFAULT_CONFIG;
-        }
-    }
-    
+
 };
 
 
