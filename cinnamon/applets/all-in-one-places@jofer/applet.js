@@ -29,7 +29,6 @@ const Gettext = imports.gettext;
 const _ = Gettext.gettext;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
-const FileUtils = imports.misc.fileUtils;
 
 const EXTENSION_UUID = "all-in-one-places@jofer"
 const SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces";
@@ -51,8 +50,39 @@ const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
 
 
 
+
+
 /**
- * Default menu item
+ * Device menu item base class
+ */
+function MenuItemBase()
+{
+    this._init.apply(this, arguments);
+}
+
+MenuItemBase.prototype =
+{
+    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    
+    _init: function(icon, text, params)
+    {
+        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
+
+        let box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
+        if (icon.substring) {
+            icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
+        }
+        box.add(icon);
+        let label = new St.Label({ text: text });
+        box.add(label);
+        this.addActor(box);
+        
+        return this;
+    }
+};
+
+/**
+ * Device menu item class
  */
 function MenuItem()
 {
@@ -61,17 +91,19 @@ function MenuItem()
 
 MenuItem.prototype =
 {
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    __proto__: MenuItemBase.prototype,
     
-    _init: function(icon, text, params)
+    _init: function(icon, text, launcher, params)
     {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-            
-        let box = new St.BoxLayout({ style_class: 'popup-combobox-item' });
-        box.add(icon);
-        let label = new St.Label({ text: text });
-        box.add(label);
-        this.addActor(box);
+        MenuItemBase.prototype._init.call(this, icon, text, params);
+
+        if (launcher != undefined) {
+            this.connect('activate', function(actor, event) {
+                new launch().command(launcher);
+            });
+        }
+        
+        return this;
     }
 };
 
@@ -85,23 +117,23 @@ function DeviceMenuItem()
 
 DeviceMenuItem.prototype =
 {
-    __proto__: MenuItem.prototype,
+    __proto__: MenuItemBase.prototype,
     
     _init: function(device, icon, text, params)
     {
-        MenuItem.prototype._init.call(this, icon, text, params);
         this.device = device;
-        this._addEjectButton();
-    },
-    
-    _addEjectButton: function()
-    {
+
+        MenuItemBase.prototype._init.call(this, icon, text, params);
+        
+        // Add eject button
         let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
         let eject_button = new St.Button({ child: eject_icon });
         eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
         this.addActor(eject_button);
-    },
         
+        return this;
+    },
+    
     _confirmEjectDevice: function()
     {
         new ConfirmationDialog(Lang.bind(this, this._doEjectDevice), EJECT_DEVICE_LABEL, EJECT_DEVICE_MESSAGE, _("Cancel"), _("OK")).open();
@@ -120,7 +152,7 @@ DeviceMenuItem.prototype =
 };
 
 /**
- * Trash menu item with empty trash button
+ * Trash menu item with empty button
  */
 function TrashMenuItem()
 {
@@ -129,79 +161,38 @@ function TrashMenuItem()
 
 TrashMenuItem.prototype =
 {
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    __proto__: MenuItemBase.prototype,
     
-    _init: function(text, params)
+    _init: function(trash_file, params)
     {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-
-        let trash_path = "trash:///";
-        this.trash_file = Gio.file_new_for_uri(trash_path);
-
-        this.text = text;
-
-        this._checkTrashStatus();
-
-        this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
-    },
-
-    destroy: function()
-    {
-        this.monitor.disconnect(this._trashChanged);
-        this.actor.destroy();
-        //this.parent();
-    },
-
-    _showTrashItem: function(icon)
-    {
-        this.box = new St.BoxLayout({ style_class: 'popup-combobox-item' });        
-        this.box.add(icon);
-        let label = new St.Label({ text: this.text });
-        this.box.add(label);
-        this.addActor(this.box);
-    },
-    
-    _showTrashItemEmpty: function()
-    {
-        let icon = new St.Icon({icon_name: "trashcan_empty", icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._showTrashItem(icon);
-    },
-    
-    _showTrashItemFull: function()
-    {
-        let icon = new St.Icon({icon_name: "trashcan_full", icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._showTrashItem(icon);
+        this.trash_file = trash_file;
+        let icon = (this._isTrashEmpty()) ? "trashcan_empty" : "trashcan_full";
         
-        let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
-        this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
-        this.addActor(this.empty_button);
+        MenuItemBase.prototype._init.call(this, icon, _("Trash"), params);
+
+        if (!this._isTrashEmpty()) {
+            // Add empty button
+            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+            this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
+            this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+            this.addActor(this.empty_button);
+        }
+
+        // Hide trash item if trash is empty
+        if (settings.get_boolean('hide-empty-trash-item')) {
+            if (this._isTrashEmpty()) this.actor.visible = false;
+        }
+        
+        return this;
     },
-    
-    _clearTrashItem: function()
-    {
-        if (this.box) this.removeActor(this.box);
-        if (this.empty_button) this.removeActor(this.empty_button);
-    },
-    
-    _checkTrashStatus: function()
+
+    _isTrashEmpty: function()
     {
         let children = this.trash_file.enumerate_children('*', 0, null, null);
         if (children.next_file(null, null) == null) {
-            this._clearTrashItem();
-            this._showTrashItemEmpty();
-            if (settings.get_boolean('hide-empty-trash-item')) {
-                this.actor.visible = false;
-            }
-        } else {
-            this._clearTrashItem();
-            this._showTrashItemFull();
-            if (settings.get_boolean('hide-empty-trash-item')) {
-                this.actor.show();
-                this.actor.visible = true;
-            }
+            return true;
         }
+        return false;
     },
     
     _confirmEmptyTrash: function()
@@ -218,13 +209,12 @@ TrashMenuItem.prototype =
             child.delete(null);
         }
     },
-    
+
     activate: function(event)
     {
         new launch().file(this.trash_file.get_uri());
         PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
     }
-
 };
 
 
@@ -300,12 +290,16 @@ MyApplet.prototype =
             this.menuManager.addMenu(this.menu);
 
             // Monitor settings changes and refresh menu on change
-            this._settingsChanged = settings.connect('changed', Lang.bind(this, this._displayOnPanel));
-            this._displayOnPanel(orientation);
-            
+            this._settingsChanged = settings.connect('changed', Lang.bind(this, this._refreshApplet));
+
             // Add edit settings context menu item
             let settings_menu_item = new Applet.MenuItem(_("Settings"), Gtk.STOCK_EDIT, Lang.bind(this, this._launchSettings));
             this._applet_context_menu.addMenuItem(settings_menu_item);
+
+            // Build panel and menu applet components
+            this._displayOnPanel();
+            this._displayMenu();
+            
         }
         catch (e) {
             global.logError(e);
@@ -317,7 +311,23 @@ MyApplet.prototype =
         this.menu.toggle();        
     },
     
-    _displayOnPanel: function(orientation)
+    _refreshApplet: function()
+    {
+        // Reset applet values in panel
+        this.set_applet_icon_name('');
+        this.set_applet_icon_symbolic_name('');
+        this.set_applet_label('');
+        this.set_applet_tooltip('');
+        
+        this._displayOnPanel();
+        
+        // Clean up all menu items
+        this.menu.removeAll();
+
+        this._displayMenu();
+    },
+    
+    _displayOnPanel: function()
     {
         let show_panel_icon;
         
@@ -327,12 +337,6 @@ MyApplet.prototype =
         } else {
             show_panel_icon = settings.get_boolean('show-panel-icon');
         }
-        
-        // Reset applet values
-        this.set_applet_icon_name('');
-        this.set_applet_icon_symbolic_name('');
-        this.set_applet_label('');
-        this.set_applet_tooltip('');
 
         if (show_panel_icon) {
             if (settings.get_boolean('full-color-panel-icon')) {
@@ -352,64 +356,68 @@ MyApplet.prototype =
         } else {
             this.set_applet_tooltip(_("Places"));
         }
-
-        this._displayMenu();        
     },
 
     _displayMenu : function()
     {
-        // Clean up all menu items
-        this.menu.removeAll();
-
         // Show home item
-        this.menu.addMenuItem(this._createStandardItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
+        this.menu.addMenuItem(new MenuItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
 
         // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
-            //let desktop_folder = FileUtils.getUserDesktopDir()
             let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
-            this.menu.addMenuItem(this._createStandardItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\""));
+            this.menu.addMenuItem(new MenuItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\""));
         }
 
         // Show trash item
         if (settings.get_boolean('show-trash-item')) {
-            this.menu.addMenuItem(new TrashMenuItem(_("Trash")));
+            this.trash_file = Gio.file_new_for_uri("trash:///");
+            
+            // Monitor trash changes
+            this.monitor = this.trash_file.monitor_directory(0, null, null);
+            this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._refreshTrashSection));
+
+            this._trash_section = new PopupMenu.PopupMenuSection();
+            this._trash_section.addMenuItem(new TrashMenuItem(this.trash_file));
+            this.menu.addMenuItem(this._trash_section);
         }
 
         // Show bookmarks section
         if (settings.get_boolean('show-bookmarks-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            
+            // Monitor bookmarks changes
+            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarksSection));
+            
             if (settings.get_boolean('collapse-bookmarks-section')) {
                 this._bookmarks_section = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
             } else {
                 this._bookmarks_section = new PopupMenu.PopupMenuSection();
             }
-            // Monitor bookmarks changes
-            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarks));
-
             this._createBookmarksSection();
             this.menu.addMenuItem(this._bookmarks_section);
         }
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
         // Show computer item
-        this.menu.addMenuItem(this._createStandardItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
+        this.menu.addMenuItem(new MenuItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
 
         // Show file system item
         if (settings.get_boolean('show-filesystem-item')) {
-            this.menu.addMenuItem(this._createStandardItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /"));
+            this.menu.addMenuItem(new MenuItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /"));
         }
 
         // Show devices section
         if (settings.get_boolean('show-devices-section')) {
+            // Monitor mounts changes
+            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevicesSection));
+
             if (settings.get_boolean('collapse-devices-section')) {
                 this._devices_section = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
             } else {
                 this._devices_section = new PopupMenu.PopupMenuSection();
             }
-            // Monitor mounts changes
-            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevices));
-            
             this._createDevicesSection();
             this.menu.addMenuItem(this._devices_section);
         }
@@ -423,9 +431,9 @@ MyApplet.prototype =
                 this._network_section = new PopupMenu.PopupMenuSection();
             }
             
-            let network_item = this._createStandardItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
+            let network_item = new MenuItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
             if (this._network_section.menu) { this._network_section.menu.addMenuItem(network_item) } else { this._network_section.addMenuItem(network_item) }
-            let connect_item = this._createStandardItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
+            let connect_item = new MenuItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
             if (this._network_section.menu) { this._network_section.menu.addMenuItem(connect_item) } else { this._network_section.addMenuItem(connect_item) }
             
             this.menu.addMenuItem(this._network_section);
@@ -435,15 +443,16 @@ MyApplet.prototype =
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             // Show search section
             if (settings.get_boolean('show-search-item')) {
-                this.menu.addMenuItem(this._createStandardItem('search', _("Search"), settings.get_string('search-command')));
+                this.menu.addMenuItem(new MenuItem('search', _("Search"), settings.get_string('search-command')));
             }
             // Show recent documents section
             if (settings.get_boolean('show-documents-section')) {
                 this.recentManager = new Gtk.RecentManager();
-                this._recent_section = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
-                // Monitor recent documents changes 
-                this._recentChanged = this.recentManager.connect('changed', Lang.bind(this, this._refreshRecent));
                 
+                // Monitor recent documents changes 
+                this._recentChanged = this.recentManager.connect('changed', Lang.bind(this, this._refreshRecentSection));
+                
+                this._recent_section = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
                 this._createRecentSection();
                 this.menu.addMenuItem(this._recent_section);
             }
@@ -454,28 +463,25 @@ MyApplet.prototype =
     /**
      * Disconnect signals
      */
-    disconnect: function()
+    destroy: function()
     {
         // Disconnecting signals
         if (this._settingsChanged) settings.disconnect(this._settingsChanged);
+        if (this._trashChanged) this.monitor.disconnect(this._trashChanged);
         if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
         if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
         if (this._recentChanged) this.recentManager.disconnect(this._recentChanged);
+        
+        Applet.TextIconApplet.prototype.destroy.call(this);
     },
 
     /**
-     * Create a standard item on the main menu
-     */ 
-    _createStandardItem: function(icon, label, launcher)
+     * Refresh trash section
+     */
+    _refreshTrashSection: function()
     {
-        let icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
-        let item = new MenuItem(icon, label);
-        if (launcher != undefined) {
-            item.connect('activate', function(actor, event) {
-                new launch().command(launcher);
-            });
-        }
-        return item;
+        this._trash_section.removeAll();
+        this._trash_section.addMenuItem(new TrashMenuItem(this.trash_file));
     },
 
     /**
@@ -484,7 +490,6 @@ MyApplet.prototype =
     _createBookmarksSection: function()
     {
         this.bookmarks = Main.placesManager.getBookmarks();
-
         for (let bookmarkid = 0; bookmarkid < this.bookmarks.length; bookmarkid++) {
             let icon = this.bookmarks[bookmarkid].iconFactory(settings.get_int('item-icon-size'));
             let bookmark_item = new MenuItem(icon, this.bookmarks[bookmarkid].name);
@@ -497,7 +502,10 @@ MyApplet.prototype =
         }
     },
     
-    _refreshBookmarks: function()
+    /**
+     * Refresh bookmarks section
+     */
+    _refreshBookmarksSection: function()
     {
         if (this._bookmarks_section.menu) { this._bookmarks_section.menu.removeAll() } else { this._bookmarks_section.removeAll() }
         this._createBookmarksSection();
@@ -522,7 +530,10 @@ MyApplet.prototype =
         }
     },
 
-    _refreshDevices: function()
+    /**
+     * Refresh devices section
+     */
+    _refreshDevicesSection: function()
     {
         if (this._devices_section.menu) { this._devices_section.menu.removeAll() } else { this._devices_section.removeAll() }
         this._createDevicesSection();
@@ -538,7 +549,7 @@ MyApplet.prototype =
         if (this.recentManager.size > 0) {
             let items = this.recentManager.get_items();
             while (id < settings.get_int('max-documents-documents') && id < this.recentManager.size) {
-                let recent_item = this._createStandardItem(items[id].get_mime_type().replace("\/","-"), items[id].get_display_name());
+                let recent_item = new MenuItem(items[id].get_mime_type().replace("\/","-"), items[id].get_display_name());
                 recent_item.connect('activate', Lang.bind(this, this._openRecentFile, items[id].get_uri()));
                 this._recent_section.menu.addMenuItem(recent_item);
                 id++;
@@ -562,17 +573,10 @@ MyApplet.prototype =
         }
     },
 
-    _confirmClearRecent: function()
-    {
-        new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
-    },
-
-    _doClearRecent: function()
-    {
-        this.recentManager.purge_items();
-    },
-
-    _refreshRecent: function()
+    /**
+     * Refresh recent documents section
+     */
+    _refreshRecentSection: function()
     {
         this._recent_section.menu.removeAll();
         if (this.recentManager.size == 0) {
@@ -584,11 +588,33 @@ MyApplet.prototype =
         }
     },
 
+    /**
+     * Dialog for confirmation on recent documents cleaning
+     */
+    _confirmClearRecent: function()
+    {
+        new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
+    },
+
+    /**
+     * Action to clear recent documents
+     */
+    _doClearRecent: function()
+    {
+        this.recentManager.purge_items();
+    },
+
+    /**
+     * Open file listed on recent documents list
+     */
     _openRecentFile: function(object, event, recent_file)
     {
         new launch().file(recent_file);
     },
     
+    /**
+     * Launch applet's settings panel
+     */
     _launchSettings: function()
     {
         //let settingsFile = GLib.build_filenamev([global.userdatadir, "applets/all-in-one-places@jofer/settings.py"]); 
