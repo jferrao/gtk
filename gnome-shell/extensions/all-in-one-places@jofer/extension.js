@@ -50,8 +50,37 @@ const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
 
 
 
+
+
 /**
- * Default menu item
+ * Device menu item base class
+ */
+function MenuItemBase()
+{
+    this._init.apply(this, arguments);
+}
+
+MenuItemBase.prototype =
+{
+    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    
+    _init: function(icon, text, params)
+    {
+        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
+
+        let label = new St.Label({ text: text });
+        this.addActor(label);
+        if (icon.substring) {
+            icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
+        }
+        this.addActor(icon);
+        
+        return this;
+    }
+};
+
+/**
+ * Device menu item class
  */
 function MenuItem()
 {
@@ -60,17 +89,147 @@ function MenuItem()
 
 MenuItem.prototype =
 {
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
+    __proto__: MenuItemBase.prototype,
     
-    _init: function(icon, text, params)
+    _init: function(icon, text, launcher, params)
     {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-            
-        let label = new St.Label({ text: text });
-        this.addActor(label);
-        this.addActor(icon);
+        MenuItemBase.prototype._init.call(this, icon, text, params);
+
+        if (launcher != undefined) {
+            this.connect('activate', function(actor, event) {
+                new launch().command(launcher);
+            });
+        }
+        
+        return this;
     }
 };
+
+/**
+ * Device menu item with eject button
+ */
+function DeviceMenuItem()
+{
+    this._init.apply(this, arguments);
+}
+
+DeviceMenuItem.prototype =
+{
+    __proto__: MenuItemBase.prototype,
+    
+    _init: function(device, icon, text, params)
+    {
+        this.device = device;
+
+        MenuItemBase.prototype._init.call(this, icon, text, params);
+        
+        // Add eject button
+        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        let eject_button = new St.Button({ child: eject_icon });
+        eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
+        this.addActor(eject_button);
+        
+        return this;
+    },
+    
+    _confirmEjectDevice: function()
+    {
+        new ConfirmationDialog(Lang.bind(this, this._doEjectDevice), EJECT_DEVICE_LABEL, EJECT_DEVICE_MESSAGE, _("Cancel"), _("OK")).open();
+    },
+    
+    _doEjectDevice: function()
+    {
+        this.device.remove();
+    },
+    
+    activate: function(event)
+    {
+        this.device.launch({ timestamp: event.get_time() });
+        PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
+    }
+};
+
+/**
+ * Trash menu item with empty button
+ */
+function TrashMenuItem()
+{
+    this._init.apply(this, arguments);
+}
+
+TrashMenuItem.prototype =
+{
+    __proto__: MenuItemBase.prototype,
+    
+    _init: function(trash_file, params)
+    {
+        this.trash_file = trash_file;
+        let icon = (this._isTrashEmpty()) ? "trashcan_empty" : "trashcan_full";
+        
+        MenuItemBase.prototype._init.call(this, icon, _("Trash"), params);
+
+        if (!this._isTrashEmpty()) {
+            // Add empty button
+            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+            this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
+            this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+            this.addActor(this.empty_button);
+        }
+
+        // Hide trash item if trash is empty
+        if (settings.get_boolean('hide-empty-trash-item')) {
+            if (this._isTrashEmpty()) this.actor.visible = false;
+        }
+        
+        return this;
+    },
+
+    _isTrashEmpty: function()
+    {
+        let children = this.trash_file.enumerate_children('*', 0, null, null);
+        if (children.next_file(null, null) == null) {
+            return true;
+        }
+        return false;
+    },
+    
+    _confirmEmptyTrash: function()
+    {
+        new ConfirmationDialog(Lang.bind(this, this._doEmptyTrash), EMPTY_TRASH_LABEL, EMPTY_TRASH_MESSAGE, _("Cancel"), _("Empty Trash")).open();
+    },
+
+    _doEmptyTrash: function()
+    {
+        let children = this.trash_file.enumerate_children('*', 0, null, null);
+        let child_info = null;
+        while ((child_info = children.next_file(null, null)) != null) {
+            let child = this.trash_file.get_child(child_info.get_name());
+            child.delete(null);
+        }
+    },
+
+    activate: function(event)
+    {
+        new launch().file(this.trash_file.get_uri());
+        PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Device menu item with eject button
@@ -363,12 +522,12 @@ AllInOnePlaces.prototype =
         this.menu.removeAll();
         
         // Show home item
-        this.menu.addMenuItem(this._createStandardItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
+        this.menu.addMenuItem(new MenuItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
 
         // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
             let desktop_folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DESKTOP);
-            this.menu.addMenuItem(this._createStandardItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\""));
+            this.menu.addMenuItem(new MenuItem('user-desktop', _("Desktop"), settings.get_string('file-manager') + " \"" + desktop_folder.replace(" ","\ ") + "\""));
         }
 
         // Show trash item
@@ -393,11 +552,11 @@ AllInOnePlaces.prototype =
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         // Show computer item
-        this.menu.addMenuItem(this._createStandardItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
+        this.menu.addMenuItem(new MenuItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
 
         // Show file system item
         if (settings.get_boolean('show-filesystem-item')) {
-            this.menu.addMenuItem(this._createStandardItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /"));
+            this.menu.addMenuItem(new MenuItem('drive-harddisk', _("File System"), settings.get_string('file-manager') + " /"));
         }
 
         // Show devices section
@@ -423,9 +582,9 @@ AllInOnePlaces.prototype =
                 this._network_section = new PopupMenu.PopupMenuSection();
             }
             
-            let network_item = this._createStandardItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
+            let network_item = new MenuItem('network-workgroup', _("Network"), settings.get_string('file-manager') + " network:///");
             if (this._network_section.menu) { this._network_section.menu.addMenuItem(network_item) } else { this._network_section.addMenuItem(network_item) }
-            let connect_item = this._createStandardItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
+            let connect_item = new MenuItem('gnome-globe', _("Connect to..."), settings.get_string('connect-command'));
             if (this._network_section.menu) { this._network_section.menu.addMenuItem(connect_item) } else { this._network_section.addMenuItem(connect_item) }
             
             this.menu.addMenuItem(this._network_section);
@@ -435,7 +594,7 @@ AllInOnePlaces.prototype =
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
             // Show search section
             if (settings.get_boolean('show-search-item')) {
-                this.menu.addMenuItem(this._createStandardItem('search', _("Search"), settings.get_string('search-command')));
+                this.menu.addMenuItem(new MenuItem('search', _("Search"), settings.get_string('search-command')));
             }
             // Show recent documents section
             if (settings.get_boolean('show-documents-section')) {
@@ -537,7 +696,7 @@ AllInOnePlaces.prototype =
         if (this.recentManager.size > 0) {
             let items = this.recentManager.get_items();
             while (id < settings.get_int('max-documents-documents') && id < this.recentManager.size) {
-                let recent_item = this._createStandardItem(items[id].get_mime_type().replace("\/","-"), items[id].get_display_name());
+                let recent_item = new MenuItem(items[id].get_mime_type().replace("\/","-"), items[id].get_display_name());
                 recent_item.connect('activate', Lang.bind(this, this._openRecentFile, items[id].get_uri()));
                 this._recent_section.menu.addMenuItem(recent_item);
                 id++;
