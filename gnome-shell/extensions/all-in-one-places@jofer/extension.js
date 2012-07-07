@@ -124,7 +124,7 @@ DeviceMenuItem.prototype =
         MenuItemBase.prototype._init.call(this, icon, text, params);
         
         // Add eject button
-        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
         let eject_button = new St.Button({ child: eject_icon });
         eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
         this.addActor(eject_button);
@@ -170,10 +170,10 @@ TrashMenuItem.prototype =
 
         if (!this._isTrashEmpty()) {
             // Add empty button
-            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-            this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
-            this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
-            this.addActor(this.empty_button);
+            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
+            let empty_button = new St.Button({ child: empty_icon });
+            empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+            this.addActor(empty_button);
         }
 
         // Hide trash item if trash is empty
@@ -213,172 +213,6 @@ TrashMenuItem.prototype =
         new launch().file(this.trash_file.get_uri());
         PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
     }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
- * Device menu item with eject button
- */
-function DeviceMenuItem()
-{
-    this._init.apply(this, arguments);
-}
-
-DeviceMenuItem.prototype =
-{
-    __proto__: MenuItem.prototype,
-    
-    _init: function(device, icon, text, params)
-    {
-        MenuItem.prototype._init.call(this, icon, text, params);
-        this.device = device;
-        this._addEjectButton();
-    },
-    
-    _addEjectButton: function()
-    {
-        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        let eject_button = new St.Button({ child: eject_icon });
-        eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
-        this.addActor(eject_button);
-    },
-    
-    _confirmEjectDevice: function()
-    {
-        new ConfirmationDialog(Lang.bind(this, this._doEjectDevice), EJECT_DEVICE_LABEL, EJECT_DEVICE_MESSAGE, _("Cancel"), _("OK")).open();
-    },
-    
-    _doEjectDevice: function()
-    {
-        this.device.remove();
-    },
-    
-    activate: function(event)
-    {
-        this.device.launch({ timestamp: event.get_time() });
-        PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
-    }
-};
-
-/**
- * Trash menu item with empty trash button
- */
-function TrashMenuItem()
-{
-    this._init.apply(this, arguments);
-}
-
-TrashMenuItem.prototype =
-{
-    __proto__: PopupMenu.PopupBaseMenuItem.prototype,
-    
-    _init: function(text, params)
-    {
-        PopupMenu.PopupBaseMenuItem.prototype._init.call(this, params);
-
-        this.trash_path = "trash:///";
-        this.trash_file = Gio.file_new_for_uri(this.trash_path);
-
-        this.text = text;
-
-        this._checkTrashStatus();
-
-        this.monitor = this.trash_file.monitor_directory(0, null, null);
-        this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._checkTrashStatus));
-    },
-    
-    destroy: function()
-    {
-        this.monitor.disconnect(this._trashChanged);
-        this.actor.destroy();
-    },
-    
-    _showTrashItem: function(icon)
-    {
-        this.label = new St.Label({ text: this.text });
-        this.addActor(this.label);
-        this.addActor(icon);
-    },
-    
-    _showTrashItemEmpty: function()
-    {
-        this.icon = new St.Icon({icon_name: 'trashcan_empty', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._showTrashItem(this.icon);
-    },
-    
-    _showTrashItemFull: function()
-    {
-        this.icon = new St.Icon({icon_name: 'trashcan_full', icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR});
-        this._showTrashItem(this.icon);
-        
-        let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-        this.empty_button = new St.Button({ child: empty_icon });
-        this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
-        this.addActor(this.empty_button);
-    },
-    
-    _clearTrashItem: function()
-    {
-        if (this.icon) this.removeActor(this.icon);
-        if (this.label) this.removeActor(this.label);
-        if (this.empty_button) this.removeActor(this.empty_button);
-    },
-    
-    _checkTrashStatus: function()
-    {
-        let children = this.trash_file.enumerate_children('*', 0, null, null);
-        if (children.next_file(null, null) == null) {
-            this._clearTrashItem();
-            this._showTrashItemEmpty();
-            if (settings.get_boolean('hide-empty-trash-item')) {
-                this.actor.visible = false;
-            }
-        } else {
-            this._clearTrashItem();
-            this._showTrashItemFull();
-            if (settings.get_boolean('hide-empty-trash-item')) {
-                this.actor.show();
-                this.actor.visible = true;
-            }
-        }
-    },
-    
-    _confirmEmptyTrash: function()
-    {
-        new ConfirmationDialog(Lang.bind(this, this._doEmptyTrash), EMPTY_TRASH_LABEL, EMPTY_TRASH_MESSAGE, _("Cancel"), _("Empty Trash")).open();
-    },
-
-    _doEmptyTrash: function()
-    {
-        let children = this.trash_file.enumerate_children('*', 0, null, null);
-        let child_info = null;
-        while ((child_info = children.next_file(null, null)) != null) {
-            let child = this.trash_file.get_child(child_info.get_name());
-            child.delete(null);
-        }
-    },
-    
-    activate: function(event)
-    {
-        new launch().file(this.trash_file.get_uri());
-        PopupMenu.PopupBaseMenuItem.prototype.activate.call(this, event);
-    }
-
 };
 
 
@@ -532,7 +366,17 @@ AllInOnePlaces.prototype =
 
         // Show trash item
         if (settings.get_boolean('show-trash-item')) {
-            this.menu.addMenuItem(new TrashMenuItem(_("Trash")));
+            //this.menu.addMenuItem(new TrashMenuItem(_("Trash")));
+            
+            this.trash_file = Gio.file_new_for_uri("trash:///");
+            
+            // Monitor trash changes
+            this.monitor = this.trash_file.monitor_directory(0, null, null);
+            this._trashChanged = this.monitor.connect('changed', Lang.bind(this, this._refreshTrashSection));
+
+            this._trash_section = new PopupMenu.PopupMenuSection();
+            this._trash_section.addMenuItem(new TrashMenuItem(this.trash_file));
+            this.menu.addMenuItem(this._trash_section);
         }
 
         // Show bookmarks section
@@ -561,14 +405,14 @@ AllInOnePlaces.prototype =
 
         // Show devices section
         if (settings.get_boolean('show-devices-section')) {
+            // Monitor mounts changes
+            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevicesSection));
+
             if (settings.get_boolean('collapse-devices-section')) {
                 this._devices_section = new PopupMenu.PopupSubMenuMenuItem(_("Removable Devices"));
             } else {
                 this._devices_section = new PopupMenu.PopupMenuSection();
             }
-            // Monitor mounts changes
-            this._devicesChanged = Main.placesManager.connect('mounts-updated', Lang.bind(this, this._refreshDevices));
-            
             this._createDevicesSection();
             this.menu.addMenuItem(this._devices_section);
         }
@@ -619,6 +463,15 @@ AllInOnePlaces.prototype =
         if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
         if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
         if (this._recentChanged) this.recentManager.disconnect(this._recentChanged);
+    },
+    
+    /**
+     * Refresh trash section
+     */
+    _refreshTrashSection: function()
+    {
+        this._trash_section.removeAll();
+        this._trash_section.addMenuItem(new TrashMenuItem(this.trash_file));
     },
     
     /**
@@ -680,7 +533,10 @@ AllInOnePlaces.prototype =
         }
     },
 
-    _refreshDevices: function()
+    /**
+     * Refresh devices section
+     */
+    _refreshDevicesSection: function()
     {
         if (this._devices_section.menu) { this._devices_section.menu.removeAll() } else { this._devices_section.removeAll() }
         this._createDevicesSection();

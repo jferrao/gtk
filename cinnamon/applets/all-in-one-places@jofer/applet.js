@@ -126,7 +126,7 @@ DeviceMenuItem.prototype =
         MenuItemBase.prototype._init.call(this, icon, text, params);
         
         // Add eject button
-        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
+        let eject_icon = new St.Icon({ icon_name: 'media-eject', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
         let eject_button = new St.Button({ child: eject_icon });
         eject_button.connect('clicked', Lang.bind(this, this._confirmEjectDevice));
         this.addActor(eject_button);
@@ -172,10 +172,10 @@ TrashMenuItem.prototype =
 
         if (!this._isTrashEmpty()) {
             // Add empty button
-            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon ' });
-            this.empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
-            this.empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
-            this.addActor(this.empty_button);
+            let empty_icon = new St.Icon({ icon_name: 'edit-clear', icon_type: St.IconType.SYMBOLIC, style_class: 'popup-menu-icon' });
+            let empty_button = new St.Button({ child: empty_icon, tooltip_text: _("Empty Trash")  });
+            empty_button.connect('clicked', Lang.bind(this, this._confirmEmptyTrash));
+            this.addActor(empty_button);
         }
 
         // Hide trash item if trash is empty
