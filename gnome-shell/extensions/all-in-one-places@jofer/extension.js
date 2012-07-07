@@ -366,8 +366,6 @@ AllInOnePlaces.prototype =
 
         // Show trash item
         if (settings.get_boolean('show-trash-item')) {
-            //this.menu.addMenuItem(new TrashMenuItem(_("Trash")));
-            
             this.trash_file = Gio.file_new_for_uri("trash:///");
             
             // Monitor trash changes
@@ -382,19 +380,21 @@ AllInOnePlaces.prototype =
         // Show bookmarks section
         if (settings.get_boolean('show-bookmarks-section')) {
             this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+            
+            // Monitor bookmarks changes
+            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarksSection));
+            
             if (settings.get_boolean('collapse-bookmarks-section')) {
                 this._bookmarks_section = new PopupMenu.PopupSubMenuMenuItem(_("Bookmarks"));
             } else {
                 this._bookmarks_section = new PopupMenu.PopupMenuSection();
             }
-            // Monitor bookmarks changes
-            this._bookmarksChanged = Main.placesManager.connect('bookmarks-updated', Lang.bind(this, this._refreshBookmarks));
-
             this._createBookmarksSection();
-            this.menu.addMenuItem(this._bookmarks_section);
-        }   
+            this.menu.addMenuItem(this._bookmarks_section);            
+        }
         
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        
         // Show computer item
         this.menu.addMenuItem(new MenuItem('computer', _("Computer"), settings.get_string('file-manager') + " computer:///"));
 
@@ -443,10 +443,11 @@ AllInOnePlaces.prototype =
             // Show recent documents section
             if (settings.get_boolean('show-documents-section')) {
                 this.recentManager = new Gtk.RecentManager();
-                this._recent_section = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
-                // Monitor recent documents changes 
-                this._recentChanged = this.recentManager.connect('changed', Lang.bind(this, this._refreshRecent));
                 
+                // Monitor recent documents changes 
+                this._recentChanged = this.recentManager.connect('changed', Lang.bind(this, this._refreshRecentSection));
+
+                this._recent_section = new PopupMenu.PopupSubMenuMenuItem(_("Recent documents"));
                 this._createRecentSection();
                 this.menu.addMenuItem(this._recent_section);
             }
@@ -473,21 +474,6 @@ AllInOnePlaces.prototype =
         this._trash_section.removeAll();
         this._trash_section.addMenuItem(new TrashMenuItem(this.trash_file));
     },
-    
-    /**
-     * Create a standard item on the main menu
-     */ 
-    _createStandardItem: function(icon, label, launcher)
-    {
-        let icon = new St.Icon({ icon_name: icon, icon_size: settings.get_int('item-icon-size'), icon_type: St.IconType.FULLCOLOR });
-        let item = new MenuItem(icon, label);
-        if (launcher != undefined) {
-            item.connect('activate', function(actor, event) {
-                new launch().command(launcher);
-            });
-        }
-        return item;
-    },
 
     /**
      * Build bookmarks section
@@ -495,7 +481,6 @@ AllInOnePlaces.prototype =
     _createBookmarksSection: function()
     {
         this.bookmarks = Main.placesManager.getBookmarks();
-
         for (let bookmarkid = 0; bookmarkid < this.bookmarks.length; bookmarkid++) {
             let icon = this.bookmarks[bookmarkid].iconFactory(settings.get_int('item-icon-size'));
             let bookmark_item = new MenuItem(icon, this.bookmarks[bookmarkid].name);
@@ -508,7 +493,10 @@ AllInOnePlaces.prototype =
         }
     },
     
-    _refreshBookmarks: function()
+    /**
+     * Refresh bookmarks section
+     */
+    _refreshBookmarksSection: function()
     {
         if (this._bookmarks_section.menu) { this._bookmarks_section.menu.removeAll() } else { this._bookmarks_section.removeAll() }
         this._createBookmarksSection();
@@ -576,17 +564,10 @@ AllInOnePlaces.prototype =
         }
     },
 
-    _confirmClearRecent: function()
-    {
-        new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
-    },
-
-    _doClearRecent: function()
-    {
-        this.recentManager.purge_items();
-    },
-
-    _refreshRecent: function()
+    /**
+     * Refresh recent documents section
+     */
+    _refreshRecentSection: function()
     {
         this._recent_section.menu.removeAll();
         if (this.recentManager.size == 0) {
@@ -598,11 +579,30 @@ AllInOnePlaces.prototype =
         }
     },
 
+    /**
+     * Dialog for confirmation on recent documents cleaning
+     */
+    _confirmClearRecent: function()
+    {
+        new ConfirmationDialog(Lang.bind(this, this._doClearRecent), CLEAR_RECENT_LABEL, CLEAR_RECENT_MESSAGE, _("Cancel"), _("Clear")).open();
+    },
+
+    /**
+     * Action to clear recent documents
+     */
+    _doClearRecent: function()
+    {
+        this.recentManager.purge_items();
+    },
+
+    /**
+     * Open file listed on recent documents list
+     */
     _openRecentFile: function(object, event, recent_file)
     {
         new launch().file(recent_file);
     },
- 
+
 };
 
 
