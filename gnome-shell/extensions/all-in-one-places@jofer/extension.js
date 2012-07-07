@@ -456,14 +456,18 @@ AllInOnePlaces.prototype =
     },
 
     /**
-     * Disconnect signals
+     * Disconnect signals and call parent destroy method
      */
-    disconnect: function()
+    destroy: function()
     {
+        // Disconnecting signals
         if (this._settingsChanged) settings.disconnect(this._settingsChanged);
+        if (this._trashChanged) this.monitor.disconnect(this._trashChanged);
         if (this._bookmarksChanged) Main.placesManager.disconnect(this._bookmarksChanged);
         if (this._devicesChanged) Main.placesManager.disconnect(this._devicesChanged);
         if (this._recentChanged) this.recentManager.disconnect(this._recentChanged);
+        
+        PanelMenu.SystemStatusButton.prototype.destroy.call(this);
     },
     
     /**
@@ -656,6 +660,5 @@ function enable()
 }
 
 function disable() {
-    _indicator.disconnect();
     _indicator.destroy();
 }
