@@ -57,7 +57,7 @@
             <description/>
         </key>
         <key name="hide-empty-trash-item" type="b">
-            <default>false</default>
+            <default>true</default>
             <summary>Hide empty trash item</summary>
             <description/>
         </key>
@@ -97,7 +97,7 @@
             <description/>
         </key>
         <key name="show-search-item" type="b">
-            <default>false</default>
+            <default>true</default>
             <summary>Show search item</summary>
             <description/>
         </key>

@@ -2,37 +2,22 @@ const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gettext = imports.gettext;
 
-function getSettings(extension, schemaName) {
-    //let schemaName = 'org.gnome.shell.extensions.AllInOnePlaces';
-    let schemaDir = extension.dir.get_child('schemas').get_path();
+function getSettings(extension, schema_name)
+{
+    let schema_dir = extension.dir.get_child('schemas').get_path();
 
     // Extension installed in .local
-    if (GLib.file_test(schemaDir + '/gschemas.compiled', GLib.FileTest.EXISTS)) {
-        let schemaSource = Gio.SettingsSchemaSource.new_from_directory(schemaDir,
-                                  Gio.SettingsSchemaSource.get_default(),
-                                  false);
-        let schema = schemaSource.lookup(schemaName, false);
-
+    if (GLib.file_test(schema_dir + '/gschemas.compiled', GLib.FileTest.EXISTS)) {
+        let schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
+        let schema = schema_source.lookup(schema_name, false);
         return new Gio.Settings({ settings_schema: schema });
     }
 
     // Extension installed system-wide
     else {
-        if (Gio.Settings.list_schemas().indexOf(schemaName) == -1)
-            throw "Schema \"%s\" not found.".format(schemaName);
-        return new Gio.Settings({ schema: schemaName });
-    }
-}
-
-function initTranslations(extension) {
-    let localeDir = extension.dir.get_child('locale').get_path();
-
-    // Extension installed in .local
-    if (GLib.file_test(localeDir, GLib.FileTest.EXISTS)) {
-        Gettext.bindtextdomain('gnome-shell-extensions-AllInOnePlaces', localeDir);
-    }
-    // Extension installed system-wide
-    else {
-        Gettext.bindtextdomain('gnome-shell-extensions-AllInOnePlaces', extension.metadata.locale);
+        if (Gio.Settings.list_schemas().indexOf(schema_name) == -1) {
+            throw new Error("Schema \"%s\" not found.".format(schema_name));
+        }
+        return new Gio.Settings({ schema: schema_name });
     }
 }

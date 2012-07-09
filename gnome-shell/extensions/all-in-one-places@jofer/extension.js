@@ -53,7 +53,7 @@ const CLEAR_RECENT_MESSAGE  = _("Clear the Recent Documents list?") + "\n";
 
 
 /**
- * Device menu item base class
+ * Menu item base class
  */
 function MenuItemBase()
 {
