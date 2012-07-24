@@ -14,14 +14,11 @@ Requires Python 2.7
 
 
 
-
-
 from optparse import OptionParser
 from gi.repository import Gio, Gtk
 import os
 
 from gettext import gettext as _
-
 
 APPLET_DIR = os.path.dirname(os.path.abspath(__file__)) 
 SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces"
@@ -39,7 +36,7 @@ PANEL_WIDGETS = [
 MENU_WIDGETS = [
     {'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
     {'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
-    {'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide empty trash item") }},
+    {'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide trash item when trash is empty") }},
     {'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
     {'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
     {'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
@@ -132,6 +129,7 @@ class Settings(object):
 
     def set_settings(self, schema_name):
         ''' Get settings values from corresponding schema file '''
+
         # Try to get schema from local installation directory
         schemas_dir = "%s/schemas" % APPLET_DIR
         if os.path.isfile("%s/gschemas.compiled" % schemas_dir):
@@ -151,6 +149,7 @@ class Widgets():
     ''' Build widgets associated with gsettings values '''
 
     def switch(self, key, label):
+        ''' Switch widget '''
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.Switch()
@@ -164,6 +163,7 @@ class Widgets():
         Settings().get_settings().set_boolean(key, widget.get_active())	
 
     def entry(self, key, label):
+        ''' Entry text widget '''
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.Entry(hexpand=True)
@@ -177,6 +177,7 @@ class Widgets():
         Settings().get_settings().set_string(key, widget.get_text());
 
     def combo(self, key, label, values):
+        ''' Combo box widget '''
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.ComboBoxText()
@@ -192,6 +193,7 @@ class Widgets():
         Settings().get_settings().set_string(key, widget.get_active_id())
 
     def slider(self, key, label, min, max, step, default):
+        ''' Slider widget '''
         box = Gtk.HBox()
         label = Gtk.Label(label)
         widget = Gtk.HScale.new_with_range(min, max, step)
@@ -204,8 +206,6 @@ class Widgets():
         
     def _slider_change(self, widget, key):
         Settings().get_settings().set_int(key, widget.get_value())
-
-
 
 
 

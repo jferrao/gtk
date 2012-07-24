@@ -10,8 +10,6 @@
 
 
 
-
-
 /**
  * Import stuff ...
  */
@@ -30,7 +28,7 @@ const _ = Gettext.gettext;
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 
-const EXTENSION_UUID = "all-in-one-places@jofer"
+const EXTENSION_UUID = "all-in-one-places@jofer";
 const SCHEMA_NAME = "org.cinnamon.applets.AllInOnePlaces";
 const APPLET_DIR = imports.ui.appletManager.appletMeta["all-in-one-places@jofer"].path;
 
@@ -205,8 +203,7 @@ TrashMenuItem.prototype =
         let children = this.trash_file.enumerate_children('*', 0, null, null);
         let child_info = null;
         while ((child_info = children.next_file(null, null)) != null) {
-            let child = this.trash_file.get_child(child_info.get_name());
-            child.delete(null);
+            this.trash_file.get_child(child_info.get_name()).delete(null);
         }
     },
 
@@ -269,7 +266,7 @@ ConfirmationDialog.prototype =
 
 
 /**
- * The applet itself
+ * The applet class
  */
 function MyApplet(orientation)
 {
