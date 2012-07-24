@@ -31,7 +31,7 @@ const Lib = Extension.imports.lib;
 
 
 
-const EXTENSION_UUID = "all-in-one-places@jofer"
+const EXTENSION_UUID = "all-in-one-places@jofer";
 const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
 let settings;
@@ -203,8 +203,7 @@ TrashMenuItem.prototype =
         let children = this.trash_file.enumerate_children('*', 0, null, null);
         let child_info = null;
         while ((child_info = children.next_file(null, null)) != null) {
-            let child = this.trash_file.get_child(child_info.get_name());
-            child.delete(null);
+            this.trash_file.get_child(child_info.get_name()).delete(null);
         }
     },
 
@@ -267,7 +266,7 @@ ConfirmationDialog.prototype =
 
 
 /**
- * The extension itself
+ * The extension class
  */
 function AllInOnePlaces(orientation)
 {
@@ -456,7 +455,7 @@ AllInOnePlaces.prototype =
     },
 
     /**
-     * Disconnect signals and call parent destroy method
+     * Disconnect all signals and call parent destroy method
      */
     destroy: function()
     {

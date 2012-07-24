@@ -58,7 +58,7 @@
         </key>
         <key name="hide-empty-trash-item" type="b">
             <default>true</default>
-            <summary>Hide empty trash item</summary>
+            <summary>Hide trash item when trash is empty</summary>
             <description/>
         </key>
         <key name="show-bookmarks-section" type="b">
@@ -92,7 +92,7 @@
             <description/>
         </key>
         <key name="collapse-network-section" type="b">
-            <default>false</default>
+            <default>true</default>
             <summary>Drop-down style network section</summary>
             <description/>
         </key>

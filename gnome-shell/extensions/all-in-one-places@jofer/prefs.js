@@ -21,33 +21,33 @@ const Lib = Extension.imports.lib;
 const SCHEMA_NAME = "org.gnome.shell.extensions.AllInOnePlaces";
 
 const PANEL_WIDGETS = [
-    { 'type': 'switch', 'args': { 'key': 'left-panel-menu', 'label': _("Show icon on the left side of the panel") }},
-    { 'type': 'switch', 'args': { 'key': 'show-panel-icon', 'label': _("Show panel icon") }},
+    { 'type': 'switcher', 'args': { 'key': 'left-panel-menu', 'label': _("Show icon on the left side of the panel"), 'tooltip': _("Requires Gnome Shell restart") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-panel-icon', 'label': _("Show panel icon") }},
     { 'type': 'slider', 'args': { 'key': 'panel-icon-size', 'label': _("Panel icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 14 }},
-    { 'type': 'switch', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-panel-text', 'label': _("Show text in panel") }},
     { 'type': 'entry', 'args': { 'key': 'panel-text', 'label': _("Panel text") }},
-    { 'type': 'switch', 'args': { 'key': 'show-settings-menu', 'label': _("Show settings menu") }},    
+    { 'type': 'switcher', 'args': { 'key': 'show-settings-menu', 'label': _("Show settings menu") }},    
     { 'type': 'combo', 'args': { 'key': 'file-manager', 'label': _("File manager"), 'values': {'nautilus': 'Nautilus', 'thunar': 'Thunar', 'pcmanfm': 'PCManFM'} }},
     { 'type': 'entry', 'args': { 'key': 'connect-command', 'label': _("Application for the  \"Connect to...\" item") }},
     { 'type': 'entry', 'args': { 'key': 'search-command', 'label': _("Application for the \"Search\" item") }}
-]
+];
 
 let MENU_WIDGETS = [
-    { 'type': 'switch', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
-    { 'type': 'switch', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
-    { 'type': 'switch', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide empty trash item") }},
-    { 'type': 'switch', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
-    { 'type': 'switch', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
-    { 'type': 'switch', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
-    { 'type': 'switch', 'args': { 'key': 'show-devices-section', 'label': _("Show devices section") }},
-    { 'type': 'switch', 'args': { 'key': 'collapse-devices-section', 'label': _("Drop-down style devices section") }},
-    { 'type': 'switch', 'args': { 'key': 'show-network-section', 'label': _("Show network section") }},
-    { 'type': 'switch', 'args': { 'key': 'collapse-network-section', 'label': _("Drop-down style network section") }},
-    { 'type': 'switch', 'args': { 'key': 'show-search-item', 'label': _("Show search item") }},
-    { 'type': 'switch', 'args': { 'key': 'show-documents-section', 'label': _("Show recent documents section") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-desktop-item', 'label': _("Show desktop item") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-trash-item', 'label': _("Show trash item") }},
+    { 'type': 'switcher', 'args': { 'key': 'hide-empty-trash-item', 'label': _("Hide trash item when trash is empty") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-bookmarks-section', 'label': _("Show bookmarks section") }},
+    { 'type': 'switcher', 'args': { 'key': 'collapse-bookmarks-section', 'label': _("Drop-down style bookmarks section") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-filesystem-item', 'label': _("Show file system item") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-devices-section', 'label': _("Show devices section") }},
+    { 'type': 'switcher', 'args': { 'key': 'collapse-devices-section', 'label': _("Drop-down style devices section") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-network-section', 'label': _("Show network section") }},
+    { 'type': 'switcher', 'args': { 'key': 'collapse-network-section', 'label': _("Drop-down style network section") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-search-item', 'label': _("Show search item") }},
+    { 'type': 'switcher', 'args': { 'key': 'show-documents-section', 'label': _("Show recent documents section") }},
     { 'type': 'slider', 'args': { 'key': 'max-documents-documents', 'label': _("Maximum number of recent documents"), 'min': 5, 'max': 25, 'step': 1, 'default': 10 }},
     { 'type': 'slider', 'args': { 'key': 'item-icon-size', 'label': _("Menu item icon size"), 'min': 8, 'max': 46, 'step': 1, 'default': 22 }},
-]
+];
 
 
 
@@ -77,7 +77,7 @@ function buildPrefsWidget()
         box_items.pack_start(widget, false, false, 5);
     }
 
-    // Build tabs
+    // Glue the tabs together
     let tabs = new Gtk.Notebook();
     tabs.set_scrollable(true);
     tabs.set_size_request(100, 100);
@@ -90,37 +90,44 @@ function buildPrefsWidget()
 }
 
 
-
+/**
+ * Widgets class
+ */
 function Widgets() {}
 
 Widgets.prototype = {
 
-    switch: function(args)
+    /**
+     * Switch widget
+     */
+    switcher: function(args)
     {
-        if (Object.keys(args).length != 2 || (args['key'] == undefined || args['label'] == undefined)) {
-            throw new Error("Incorrect arguments in Widgets().switch() method: needs key and label.");
+        if (Object.keys(args).length < 2 || (args['key'] == undefined || args['label'] == undefined)) {
+            throw new Error("Incorrect arguments in Widgets().switcher() method: needs key and label.");
         }
-        
+
         let box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL });
         let label = new Gtk.Label({ label: args['label'], xalign: 0 });
         let widget = new Gtk.Switch({ active: settings.get_boolean(args['key']) });
         widget.connect('notify::active', function(switch_widget) {
             settings.set_boolean(args['key'], switch_widget.active);
         });
-/*
-        if (settings_bool[setting].help) {
-            label.set_tooltip_text(settings_bool[setting].help);
-            widget.set_tooltip_text(settings_bool[setting].help);
+        
+        if (args['tooltip']) {
+            widget.set_tooltip_text(args['tooltip']);
         }
-*/
+        
         box.pack_start(label, true, true, 0);
         box.add(widget);
         return box;
     },
     
+    /**
+     * Entry text widget
+     */
     entry: function(args)
     {
-        if (Object.keys(args).length != 2 || (args['key'] == undefined || args['label'] == undefined)) {
+        if (Object.keys(args).length < 2 || (args['key'] == undefined || args['label'] == undefined)) {
             throw new Error("Incorrect arguments in Widgets().entry() method: needs key and label.");
         }
         
@@ -136,9 +143,12 @@ Widgets.prototype = {
         return box;
     },
     
+    /**
+     * Slider widget
+     */
     slider: function(args)
     {
-        if (Object.keys(args).length != 6 || (args['key'] == undefined || args['label'] == undefined || args['min'] == undefined || args['max'] == undefined || args['step'] == undefined || args['default'] == undefined)) {
+        if (Object.keys(args).length < 6 || (args['key'] == undefined || args['label'] == undefined || args['min'] == undefined || args['max'] == undefined || args['step'] == undefined || args['default'] == undefined)) {
             throw new Error("Incorrect arguments in Widgets().slider() method: needs key, label, min, max, step, default.");
         }
         
@@ -156,9 +166,12 @@ Widgets.prototype = {
         return box;
     },
     
+    /**
+     * Combo box widget
+     */
     combo: function(args)
     {
-        if (Object.keys(args).length != 3 || (args['key'] == undefined || args['label'] == undefined || args['values'] == undefined)) {
+        if (Object.keys(args).length < 3 || (args['key'] == undefined || args['label'] == undefined || args['values'] == undefined)) {
             throw new Error("Incorrect arguments in Widgets().entry() method: needs key, label and values.");
         }
         

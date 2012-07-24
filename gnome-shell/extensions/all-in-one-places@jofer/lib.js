@@ -2,6 +2,13 @@ const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Gettext = imports.gettext;
 
+/**
+ * Get settings from local or global scope, as default or fail safe.
+ * 
+ * @param extension
+ * @param schema_name
+ * @returns {Gio.Settings}
+ */
 function getSettings(extension, schema_name)
 {
     let schema_dir = extension.dir.get_child('schemas').get_path();
