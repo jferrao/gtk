@@ -358,7 +358,7 @@ MyApplet.prototype =
     _displayMenu : function()
     {
         // Show home item
-        this.menu.addMenuItem(new MenuItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
+        this.menu.addMenuItem(new MenuItem('user-home', _("Home"), settings.get_string('file-manager')));
 
         // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
