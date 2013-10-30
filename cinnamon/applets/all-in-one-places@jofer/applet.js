@@ -604,7 +604,7 @@ MyApplet.prototype =
     /**
      * Open file listed on recent documents list
      */
-    _openRecentFile: function(object, event, recent_file)
+    _openRecentFile: function(object, event, is, recent_file)
     {
         new launch().file(recent_file);
     },
