@@ -652,7 +652,7 @@ function getSettings(schema_name, applet_dir)
 
     // Check if schemas are available in .local or if it's installed system-wide
     if (GLib.file_test(schema_dir + '/gschemas.compiled', GLib.FileTest.EXISTS)) {
-        schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
+        let schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
         let schema = schema_source.lookup(SCHEMA_NAME, false);
         return new Gio.Settings({ settings_schema: schema });
     } else {
@@ -660,7 +660,6 @@ function getSettings(schema_name, applet_dir)
             throw "Schema \"%s\" not found.".format(schema_name);
         return new Gio.Settings({ schema: schema_name });
     }
-
 }
 
 
