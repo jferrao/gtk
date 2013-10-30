@@ -4,7 +4,7 @@
  * 
  * 
  * @author jferrao <jferrao@ymail.com>
- * @version 2.0
+ * @version 2.1
  * 
  */
 
@@ -358,7 +358,7 @@ MyApplet.prototype =
     _displayMenu : function()
     {
         // Show home item
-        this.menu.addMenuItem(new MenuItem('user-home', _("Home Folder"), settings.get_string('file-manager')));
+        this.menu.addMenuItem(new MenuItem('user-home', _("Home"), settings.get_string('file-manager')));
 
         // Show desktop item
         if (settings.get_boolean('show-desktop-item')) {
@@ -604,7 +604,7 @@ MyApplet.prototype =
     /**
      * Open file listed on recent documents list
      */
-    _openRecentFile: function(object, event, recent_file)
+    _openRecentFile: function(object, event, is, recent_file)
     {
         new launch().file(recent_file);
     },
@@ -652,7 +652,7 @@ function getSettings(schema_name, applet_dir)
 
     // Check if schemas are available in .local or if it's installed system-wide
     if (GLib.file_test(schema_dir + '/gschemas.compiled', GLib.FileTest.EXISTS)) {
-        schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
+        let schema_source = Gio.SettingsSchemaSource.new_from_directory(schema_dir, Gio.SettingsSchemaSource.get_default(), false);
         let schema = schema_source.lookup(SCHEMA_NAME, false);
         return new Gio.Settings({ settings_schema: schema });
     } else {
@@ -660,7 +660,6 @@ function getSettings(schema_name, applet_dir)
             throw "Schema \"%s\" not found.".format(schema_name);
         return new Gio.Settings({ schema: schema_name });
     }
-
 }
 
 
